@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button';
 
 export const HeroSection: React.FC = () => {
   return (
-    <div className="h-screen w-full flex flex-col bg-background overflow-hidden font-body relative">
+    <div className="min-h-screen w-full flex flex-col bg-background overflow-y-auto font-body relative">
       {/* ----------------- NAVBAR ----------------- */}
       <header className="flex items-center justify-between px-6 md:px-12 lg:px-20 py-5 font-body flex-shrink-0 z-20 relative">
         {/* Left: Logo */}
@@ -49,7 +49,7 @@ export const HeroSection: React.FC = () => {
       </header>
 
       {/* ----------------- HERO SECTION ----------------- */}
-      <main className="relative flex-1 flex flex-col items-center w-full overflow-hidden z-10 px-4 pt-2">
+      <main className="relative flex-1 flex flex-col items-center w-full z-10 px-4 pt-2 pb-12">
         {/* Background Video */}
         <video
           autoPlay
