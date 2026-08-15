@@ -77,7 +77,17 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
 
   return (
     <div className="min-h-screen w-full flex flex-col bg-background overflow-y-auto font-body relative">
-      {/* Toast Notification */}
+      {/* Background Video - pointer-events-none ensures it never blocks clicks */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="fixed inset-0 w-full h-full object-cover z-0 pointer-events-none opacity-90"
+        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260319_015952_e1deeb12-8fb7-4071-a42a-60779fc64ab6.mp4"
+      />
+
+      {/* Toast Notification Banner */}
       <AnimatePresence>
         {toastMessage && (
           <motion.div
@@ -93,11 +103,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
       </AnimatePresence>
 
       {/* ----------------- NAVBAR ----------------- */}
-      <header className="flex items-center justify-between px-6 md:px-12 lg:px-20 py-5 font-body flex-shrink-0 z-20 relative">
+      <header className="flex items-center justify-between px-6 md:px-12 lg:px-20 py-5 font-body flex-shrink-0 z-30 relative pointer-events-auto">
         {/* Left: Logo */}
         <button 
           onClick={() => { setActiveNav('Home'); showToast('Welcome to ClaimForge'); }}
-          className="flex items-center gap-2 text-left group"
+          className="flex items-center gap-2 text-left group cursor-pointer relative z-30"
         >
           <span className="text-xl font-semibold tracking-tight text-foreground group-hover:opacity-80 transition-opacity">
             ✦ ClaimForge
@@ -105,7 +115,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
         </button>
 
         {/* Right: Nav Links */}
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium relative z-30">
           {['Home', 'Pricing', 'About', 'Contact'].map((item) => (
             <button
               key={item}
@@ -113,7 +123,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
                 setActiveNav(item);
                 showToast(`Navigated to ${item}`);
               }}
-              className={`transition-colors text-sm ${
+              className={`transition-colors text-sm cursor-pointer relative z-30 ${
                 activeNav === item 
                   ? 'text-foreground font-semibold underline underline-offset-4' 
                   : 'text-muted-foreground hover:text-foreground'
@@ -125,19 +135,19 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
         </nav>
 
         {/* CTA Buttons */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 relative z-30">
           {onLaunchPlatform && (
             <Button
               variant="outline"
               onClick={onLaunchPlatform}
-              className="rounded-full px-4 text-xs font-medium border-border hover:bg-secondary hidden sm:inline-flex"
+              className="rounded-full px-4 text-xs font-medium border-border hover:bg-secondary hidden sm:inline-flex cursor-pointer relative z-30"
             >
               Open Platform
             </Button>
           )}
           <Button 
             onClick={() => setIsDemoModalOpen(true)}
-            className="rounded-full px-5 text-sm font-medium"
+            className="rounded-full px-5 text-sm font-medium cursor-pointer relative z-30"
           >
             Get Started
           </Button>
@@ -145,19 +155,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
       </header>
 
       {/* ----------------- HERO SECTION ----------------- */}
-      <main className="relative flex-1 flex flex-col items-center w-full z-10 px-4 pt-2 pb-12">
-        {/* Background Video */}
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none opacity-90"
-          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260319_015952_e1deeb12-8fb7-4071-a42a-60779fc64ab6.mp4"
-        />
-
+      <main className="relative flex-1 flex flex-col items-center w-full z-20 px-4 pt-2 pb-12 pointer-events-auto">
+        
         {/* Hero Content Wrapper */}
-        <div className="relative z-10 flex flex-col items-center w-full max-w-6xl mx-auto flex-1">
+        <div className="relative z-20 flex flex-col items-center w-full max-w-6xl mx-auto flex-1">
           
           {/* 1. Headline */}
           <motion.h1
@@ -184,18 +185,18 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="mt-5 flex items-center gap-3"
+            className="mt-5 flex items-center gap-3 relative z-30"
           >
             <Button 
               onClick={() => setIsDemoModalOpen(true)}
-              className="rounded-full px-6 py-5 text-sm font-medium font-body shadow-md"
+              className="rounded-full px-6 py-5 text-sm font-medium font-body shadow-md cursor-pointer relative z-30"
             >
               Book a demo
             </Button>
             <Button
               variant="ghost"
               onClick={() => setIsVideoModalOpen(true)}
-              className="h-11 w-11 rounded-full border-0 bg-background shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:bg-background/80 p-0 flex items-center justify-center"
+              className="h-11 w-11 rounded-full border-0 bg-background shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:bg-background/80 p-0 flex items-center justify-center cursor-pointer relative z-30"
               aria-label="Play video"
             >
               <Play className="h-4 w-4 fill-foreground text-foreground ml-0.5" />
@@ -207,7 +208,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            className="mt-6 w-full max-w-5xl flex-1 flex flex-col justify-start"
+            className="mt-6 w-full max-w-5xl flex-1 flex flex-col justify-start relative z-20"
           >
             <div
               className="rounded-2xl overflow-hidden p-3 md:p-4 w-full flex-1 flex flex-col backdrop-blur-md"
@@ -218,14 +219,14 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
               }}
             >
               {/* Dashboard Internals Wrapper */}
-              <div className="bg-background/95 rounded-xl border border-border/60 shadow-sm flex flex-col text-[11px] select-none flex-1 overflow-hidden">
+              <div className="bg-background/95 rounded-xl border border-border/60 shadow-sm flex flex-col text-[11px] flex-1 overflow-hidden pointer-events-auto">
                 
                 {/* Dashboard Top Bar */}
                 <div className="h-11 border-b border-border/60 px-4 flex items-center justify-between bg-background">
                   {/* Left: Brand */}
                   <button 
                     onClick={() => showToast('ClaimForge Workspace Active')}
-                    className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                    className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
                   >
                     <div className="w-5 h-5 rounded bg-primary text-primary-foreground flex items-center justify-center font-bold text-[10px]">
                       CF
@@ -247,7 +248,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
                       />
                     </div>
                     {searchQuery ? (
-                      <button onClick={() => setSearchQuery('')} className="text-muted-foreground hover:text-foreground">
+                      <button onClick={() => setSearchQuery('')} className="text-muted-foreground hover:text-foreground cursor-pointer">
                         <X className="w-3 h-3" />
                       </button>
                     ) : (
@@ -261,21 +262,21 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
                   <div className="flex items-center gap-3">
                     <button 
                       onClick={() => setIsUploadModalOpen(true)}
-                      className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-md px-2.5 py-1 font-medium text-[10px] shadow-sm flex items-center gap-1 transition-colors pointer-events-auto cursor-pointer"
+                      className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-md px-2.5 py-1 font-medium text-[10px] shadow-sm flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       <UploadCloud className="w-3 h-3" />
                       Upload Evidence
                     </button>
                     <button 
                       onClick={() => showToast('3 Unread Claim Intelligence Notifications')}
-                      className="relative p-1 hover:text-foreground text-muted-foreground transition-colors pointer-events-auto"
+                      className="relative p-1 hover:text-foreground text-muted-foreground transition-colors cursor-pointer"
                     >
                       <Bell className="w-3.5 h-3.5" />
                       <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-accent rounded-full" />
                     </button>
                     <button 
                       onClick={() => showToast('Jane Bennett (Chief Claims Officer)')}
-                      className="w-6 h-6 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-semibold border border-slate-300 pointer-events-auto"
+                      className="w-6 h-6 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-semibold border border-slate-300 cursor-pointer"
                     >
                       JB
                     </button>
@@ -306,7 +307,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
                               setActiveSidebar(item.name);
                               showToast(`View switched to ${item.name}`);
                             }}
-                            className={`w-full px-2.5 py-1.5 rounded-md flex items-center justify-between text-left transition-colors pointer-events-auto cursor-pointer ${
+                            className={`w-full px-2.5 py-1.5 rounded-md flex items-center justify-between text-left transition-colors cursor-pointer ${
                               isActive
                                 ? 'bg-primary/10 text-primary font-medium'
                                 : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
@@ -335,7 +336,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
                           <button
                             key={wf}
                             onClick={() => showToast(`Workflow: ${wf}`)}
-                            className="w-full text-muted-foreground hover:text-foreground px-2.5 py-1 flex items-center gap-2 text-left pointer-events-auto"
+                            className="w-full text-muted-foreground hover:text-foreground px-2.5 py-1 flex items-center gap-2 text-left cursor-pointer"
                           >
                             <SlidersHorizontal className="w-3 h-3" />
                             <span>{wf}</span>
@@ -361,7 +362,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
                       {onLaunchPlatform && (
                         <button
                           onClick={onLaunchPlatform}
-                          className="text-[10px] text-accent font-semibold flex items-center gap-1 hover:underline pointer-events-auto"
+                          className="text-[10px] text-accent font-semibold flex items-center gap-1 hover:underline cursor-pointer"
                         >
                           Launch Workspace <ArrowRight className="w-3 h-3" />
                         </button>
@@ -380,7 +381,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
                                 setActiveActionPill(action);
                                 showToast(`Action Triggered: ${action}`);
                               }}
-                              className={`rounded-full px-3 py-1 text-[10px] font-medium transition-all pointer-events-auto cursor-pointer ${
+                              className={`rounded-full px-3 py-1 text-[10px] font-medium transition-all cursor-pointer ${
                                 isSelected
                                   ? 'bg-accent text-accent-foreground shadow-sm'
                                   : 'bg-background text-foreground border border-border/60 hover:bg-secondary'
@@ -393,7 +394,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
                       </div>
                       <button 
                         onClick={() => showToast('Custom action layout editor opened')}
-                        className="text-[10px] text-muted-foreground hover:text-foreground font-medium pointer-events-auto"
+                        className="text-[10px] text-muted-foreground hover:text-foreground font-medium cursor-pointer"
                       >
                         + Customize
                       </button>
@@ -412,7 +413,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
                                 <button
                                   key={tf}
                                   onClick={() => setSelectedTimeframe(tf)}
-                                  className={`text-[9px] uppercase px-1.5 py-0.5 rounded pointer-events-auto ${
+                                  className={`text-[9px] uppercase px-1.5 py-0.5 rounded cursor-pointer ${
                                     selectedTimeframe === tf ? 'bg-primary text-primary-foreground font-bold' : 'hover:bg-secondary'
                                   }`}
                                 >
@@ -477,10 +478,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-[11px] font-semibold text-foreground">Accounts</span>
                           <div className="flex items-center gap-1.5">
-                            <button onClick={() => showToast('Create New Portfolio')} className="hover:text-foreground text-muted-foreground pointer-events-auto">
+                            <button onClick={() => showToast('Create New Portfolio')} className="hover:text-foreground text-muted-foreground cursor-pointer">
                               <Plus className="w-3.5 h-3.5" />
                             </button>
-                            <button onClick={() => showToast('Portfolio Settings')} className="hover:text-foreground text-muted-foreground pointer-events-auto">
+                            <button onClick={() => showToast('Portfolio Settings')} className="hover:text-foreground text-muted-foreground cursor-pointer">
                               <MoreVertical className="w-3.5 h-3.5" />
                             </button>
                           </div>
@@ -488,15 +489,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
 
                         {/* Account rows */}
                         <div className="flex flex-col">
-                          <button onClick={() => showToast('Credit Account Selected')} className="py-2 flex items-center justify-between text-xs hover:bg-secondary/40 px-1 rounded transition-colors text-left pointer-events-auto">
+                          <button onClick={() => showToast('Credit Account Selected')} className="py-2 flex items-center justify-between text-xs hover:bg-secondary/40 px-1 rounded transition-colors text-left cursor-pointer">
                             <span className="text-muted-foreground text-[11px]">Credit</span>
                             <span className="font-medium text-foreground text-[11px]">$98,125.50</span>
                           </button>
-                          <button onClick={() => showToast('Treasury Account Selected')} className="py-2 flex items-center justify-between text-xs hover:bg-secondary/40 px-1 rounded transition-colors text-left pointer-events-auto">
+                          <button onClick={() => showToast('Treasury Account Selected')} className="py-2 flex items-center justify-between text-xs hover:bg-secondary/40 px-1 rounded transition-colors text-left cursor-pointer">
                             <span className="text-muted-foreground text-[11px]">Treasury</span>
                             <span className="font-medium text-foreground text-[11px]">$6,750,200.00</span>
                           </button>
-                          <button onClick={() => showToast('Operations Account Selected')} className="py-2 flex items-center justify-between text-xs hover:bg-secondary/40 px-1 rounded transition-colors text-left pointer-events-auto">
+                          <button onClick={() => showToast('Operations Account Selected')} className="py-2 flex items-center justify-between text-xs hover:bg-secondary/40 px-1 rounded transition-colors text-left cursor-pointer">
                             <span className="text-muted-foreground text-[11px]">Operations</span>
                             <span className="font-medium text-foreground text-[11px]">$1,592,864.82</span>
                           </button>
@@ -523,7 +524,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
                           <div 
                             key={item.id}
                             onClick={() => showToast(`Selected Transaction: ${item.desc} (${item.amount})`)}
-                            className="grid grid-cols-4 py-2 items-center border-b border-border/30 hover:bg-secondary/40 px-1 rounded transition-colors cursor-pointer pointer-events-auto"
+                            className="grid grid-cols-4 py-2 items-center border-b border-border/30 hover:bg-secondary/40 px-1 rounded transition-colors cursor-pointer"
                           >
                             <div className="font-medium text-foreground">{item.desc}</div>
                             <div className="text-muted-foreground">{item.cat}</div>
@@ -557,7 +558,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
           <div className="bg-background border border-border rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
             <button 
               onClick={() => setIsDemoModalOpen(false)}
-              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -606,7 +607,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
                     className="w-full bg-secondary border border-border rounded-lg px-3 py-2 text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
-                <Button type="submit" className="w-full rounded-lg py-2 mt-2 font-medium">
+                <Button type="submit" className="w-full rounded-lg py-2 mt-2 font-medium cursor-pointer">
                   Submit Request
                 </Button>
               </form>
@@ -621,7 +622,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
           <div className="bg-background border border-border rounded-2xl p-6 w-full max-w-lg shadow-2xl relative">
             <button 
               onClick={() => setIsUploadModalOpen(false)}
-              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+              className="absolute top-4 right-4 text-muted-foreground hover:text-foreground cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -638,7 +639,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
                   setIsUploadModalOpen(false);
                   showToast('Evidence ingested into ClaimForge AI Pipeline!');
                 }}
-                className="mt-4 rounded-full text-xs px-4 py-1.5"
+                className="mt-4 rounded-full text-xs px-4 py-1.5 cursor-pointer"
               >
                 Browse Files
               </Button>
@@ -653,7 +654,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
           <div className="relative w-full max-w-4xl aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/20">
             <button 
               onClick={() => setIsVideoModalOpen(false)}
-              className="absolute top-4 right-4 z-10 bg-black/60 text-white rounded-full p-2 hover:bg-black"
+              className="absolute top-4 right-4 z-10 bg-black/60 text-white rounded-full p-2 hover:bg-black cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
