@@ -43,7 +43,7 @@ class ScoringEngine:
             factors["GPS_CORROBORATION"] = 10.0
 
         if has_contradiction:
-            penalties["CONTRADICTION"] = -20.0
+            penalties["CONTRADICTION"] = -40.0
         if has_missing_critical_evidence:
             penalties["MISSING_CRITICAL_EVIDENCE"] = -20.0
 
