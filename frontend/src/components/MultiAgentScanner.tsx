@@ -94,14 +94,14 @@ export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => voi
       agent: 'Reasoning Agent',
       statusType: 'progress',
       tag: 'IR_GEN',
-      formattedMessage: <>Generating NexIR intermediate representation <span className="text-[#4E7570]">...</span></>
+      formattedMessage: <>Generating ClaimIR intermediate representation <span className="text-[#4E7570]">...</span></>
     },
     {
       timestamp: '09:14:04',
       agent: 'Reasoning Agent',
       statusType: 'success',
       tag: 'IR_DONE',
-      formattedMessage: <>NexIR generated <span className="text-[#4E7570]">|</span> ops=47 <span className="text-[#4E7570]">|</span> size=2.3KB</>
+      formattedMessage: <>ClaimIR generated <span className="text-[#4E7570]">|</span> ops=47 <span className="text-[#4E7570]">|</span> size=2.3KB</>
     },
     {
       timestamp: '09:14:05',
@@ -310,9 +310,6 @@ export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => voi
             <span className="w-3 h-3 rounded-full bg-[#FFBD2E] inline-block" />
             <span className="w-3 h-3 rounded-full bg-[#27C93F] inline-block" />
           </div>
-          <span className="text-[11px] text-[#4E7570] font-medium tracking-wide">
-            nexops@protocol:~$
-          </span>
         </div>
 
         {/* Inner Terminal Execution Log Body */}
@@ -323,10 +320,10 @@ export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => voi
           {/* Command prompt header line */}
           <div className="flex items-center gap-2 text-xs pb-1">
             <span className="text-[#00F2FE] font-bold">$</span>
-            <span className="text-[#00F2FE] font-bold">nexops compile escrow.intent --network bch</span>
+            <span className="text-[#00F2FE] font-bold">claimforge audit.intent --network mainnet</span>
           </div>
           <div className="text-[#4E7570] text-[11px] font-semibold mb-3">
-            NexOps Protocol v1.2.4
+            ClaimForge Protocol v2.4.0
           </div>
 
           {/* Sequential line-by-line log entries */}

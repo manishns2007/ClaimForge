@@ -103,9 +103,6 @@ export const LiveSSELogViewer: React.FC<LiveSSELogViewerProps> = ({
               <span className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E] inline-block" />
               <span className="w-2.5 h-2.5 rounded-full bg-[#27C93F] inline-block" />
             </div>
-            <span className="text-[10px] text-[#4E7570] font-medium">
-              nexops@protocol:~$
-            </span>
           </div>
 
           {/* Terminal Console Body */}
@@ -115,10 +112,10 @@ export const LiveSSELogViewer: React.FC<LiveSSELogViewerProps> = ({
           >
             <div className="flex items-center gap-1.5 text-[11px] pb-1">
               <span className="text-[#00F2FE] font-bold">$</span>
-              <span className="text-[#00F2FE] font-bold">nexops compile escrow.intent --network bch</span>
+              <span className="text-[#00F2FE] font-bold">claimforge audit {investigationId}</span>
             </div>
             <div className="text-[#4E7570] text-[10px] mb-2 font-semibold">
-              NexOps Protocol v1.2.4
+              ClaimForge Agent Protocol v2.4.0
             </div>
 
             {allLogs.length === 0 ? (
