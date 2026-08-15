@@ -56,104 +56,46 @@ export const EvidenceViewerModal: React.FC<EvidenceViewerModalProps> = ({
   const rawUrl = getDocumentRawUrl(investigationId, document.id);
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(5, 8, 15, 0.85)',
-      backdropFilter: 'blur(6px)',
-      zIndex: 1000,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '24px'
-    }}>
-      <div style={{
-        background: '#0F172A',
-        border: '1px solid #334155',
-        borderRadius: '8px',
-        width: '100%',
-        maxWidth: '1200px',
-        height: '85vh',
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)'
-      }}>
+    <div className="fixed inset-0 z-[1000] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 font-body">
+      <div className="bg-white border border-[#E5E5E2] rounded-2xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl overflow-hidden">
         {/* Modal Header */}
-        <div style={{
-          padding: '16px 24px',
-          borderBottom: '1px solid #1E293B',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: '#0B1120'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="px-6 py-4 border-b border-[#E5E5E2] flex items-center justify-between bg-[#F7F7F5]">
+          <div className="flex items-center gap-3">
             <FileIcon fileType={document.file_type} />
             <div>
-              <div style={{ fontSize: '15px', fontWeight: '700', color: '#F8FAFC' }}>
+              <div className="text-sm font-bold text-[#20242A]">
                 {document.filename}
               </div>
-              <div style={{ fontSize: '11px', color: '#94A3B8', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span>Type: <strong style={{ color: '#F8FAFC' }}>{document.file_type}</strong></span>
+              <div className="text-xs text-[#737A80] flex items-center gap-2 mt-0.5">
+                <span>Type: <strong className="text-[#20242A]">{document.file_type}</strong></span>
                 <span>•</span>
                 <span>Size: {(document.file_size / 1024).toFixed(1)} KB</span>
                 <span>•</span>
-                <span>Status: <span style={{ color: '#34D399' }}>{document.status}</span></span>
+                <span>Status: <span className="text-emerald-600 font-semibold">{document.status}</span></span>
               </div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="flex items-center gap-3">
             {/* View Mode Tabs */}
-            <div style={{ display: 'flex', background: '#1E293B', borderRadius: '4px', padding: '2px' }}>
-              <button
-                onClick={() => setActiveTab('preview')}
-                style={{
-                  background: activeTab === 'preview' ? '#38BDF8' : 'transparent',
-                  color: activeTab === 'preview' ? '#0F172A' : '#94A3B8',
-                  border: 'none',
-                  borderRadius: '3px',
-                  padding: '4px 10px',
-                  fontSize: '11px',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
-                Document Viewer
-              </button>
-              <button
-                onClick={() => setActiveTab('chunks')}
-                style={{
-                  background: activeTab === 'chunks' ? '#38BDF8' : 'transparent',
-                  color: activeTab === 'chunks' ? '#0F172A' : '#94A3B8',
-                  border: 'none',
-                  borderRadius: '3px',
-                  padding: '4px 10px',
-                  fontSize: '11px',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
-                Parsed Chunks ({docContent?.chunks.length || 0})
-              </button>
-              <button
-                onClick={() => setActiveTab('raw_text')}
-                style={{
-                  background: activeTab === 'raw_text' ? '#38BDF8' : 'transparent',
-                  color: activeTab === 'raw_text' ? '#0F172A' : '#94A3B8',
-                  border: 'none',
-                  borderRadius: '3px',
-                  padding: '4px 10px',
-                  fontSize: '11px',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
-              >
-                Raw Text
-              </button>
+            <div className="flex bg-[#E5E5E2] rounded-xl p-1">
+              {[
+                { key: 'preview', label: 'Document Viewer' },
+                { key: 'chunks', label: `Parsed Chunks (${docContent?.chunks.length || 0})` },
+                { key: 'raw_text', label: 'Raw Text' },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key as any)}
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all border-none cursor-pointer ${
+                    activeTab === tab.key
+                      ? 'bg-white text-[#6C63E6] shadow-xs'
+                      : 'text-[#737A80] hover:text-[#20242A]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
             {/* Direct File Link */}
@@ -161,122 +103,93 @@ export const EvidenceViewerModal: React.FC<EvidenceViewerModalProps> = ({
               href={rawUrl}
               target="_blank"
               rel="noreferrer"
-              className="btn-secondary"
-              style={{ fontSize: '11px', padding: '4px 10px', textDecoration: 'none' }}
+              className="btn-secondary text-xs py-1.5 px-3 rounded-full flex items-center gap-1 text-decoration-none"
             >
-              <Download size={13} /> Open Raw File
+              <Download className="w-3.5 h-3.5" /> Raw File
             </a>
 
             {/* Close Button */}
             <button
               onClick={onClose}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#94A3B8',
-                cursor: 'pointer',
-                padding: '4px',
-                borderRadius: '4px'
-              }}
+              className="text-[#737A80] hover:text-[#20242A] bg-transparent border-none cursor-pointer"
             >
-              <X size={20} />
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Modal Body */}
-        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: '#090D16' }}>
+        <div className="flex-1 overflow-hidden flex flex-col bg-white">
           {loading ? (
-            <div style={{ padding: '60px', textAlign: 'center', color: '#94A3B8' }}>
-              <div style={{ fontSize: '14px', fontWeight: '600' }}>Loading document evidence content...</div>
-              <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px' }}>Verifying document path & security boundary</div>
+            <div className="py-20 text-center text-[#737A80] space-y-2 font-body">
+              <div className="text-sm font-bold text-[#20242A]">Loading document evidence content...</div>
+              <div className="text-xs text-[#737A80]">Verifying document path & security boundary</div>
             </div>
           ) : error ? (
-            <div style={{ padding: '60px', textAlign: 'center', color: '#EF4444' }}>
-              <AlertCircle size={32} style={{ margin: '0 auto 12px' }} />
-              <div style={{ fontSize: '15px', fontWeight: '700' }}>Unable to load document content</div>
-              <div style={{ fontSize: '12px', color: '#94A3B8', marginTop: '4px' }}>{error}</div>
+            <div className="py-20 text-center text-rose-600 space-y-2 font-body">
+              <AlertCircle className="w-8 h-8 mx-auto" />
+              <div className="text-base font-bold text-[#20242A]">Unable to load document content</div>
+              <div className="text-xs text-[#737A80]">{error}</div>
             </div>
           ) : (
             <>
               {/* Filter / Search Bar */}
-              <div style={{ padding: '10px 20px', background: '#0F172A', borderBottom: '1px solid #1E293B', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <Search size={14} color="#64748B" />
+              <div className="px-6 py-3 bg-[#F7F7F5] border-b border-[#E5E5E2] flex items-center gap-3">
+                <Search className="w-4 h-4 text-[#737A80]" />
                 <input
                   type="text"
                   placeholder="Filter or search inside document text..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    flex: 1,
-                    background: '#0B1120',
-                    border: '1px solid #334155',
-                    borderRadius: '4px',
-                    padding: '4px 10px',
-                    color: '#F8FAFC',
-                    fontSize: '12px',
-                    outline: 'none'
-                  }}
+                  className="flex-1 bg-white border border-[#E5E5E2] rounded-xl px-3 py-1.5 text-xs text-[#20242A] outline-none"
                 />
                 {highlightPageNumber && (
-                  <span className="badge badge-medium">
+                  <span className="badge badge-medium text-xs">
                     Citation Highlight: Page {highlightPageNumber}
                   </span>
                 )}
               </div>
 
               {/* View Container */}
-              <div style={{ flex: 1, overflow: 'auto', padding: '20px' }}>
+              <div className="flex-1 overflow-auto p-6">
                 {activeTab === 'preview' && (
                   document.file_type === 'PDF' ? (
                     <iframe
                       src={rawUrl}
                       title={document.filename}
-                      style={{ width: '100%', height: '100%', border: 'none', borderRadius: '4px', background: '#FFFFFF' }}
+                      className="w-full h-full border border-[#E5E5E2] rounded-xl bg-white"
                     />
                   ) : (
-                    <pre style={{
-                      fontFamily: 'JetBrains Mono, monospace',
-                      fontSize: '12px',
-                      color: '#E2E8F0',
-                      background: '#0B1120',
-                      padding: '20px',
-                      borderRadius: '6px',
-                      border: '1px solid #1E293B',
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                      lineHeight: 1.6
-                    }}>
+                    <pre className="font-mono text-xs text-[#20242A] bg-[#F7F7F5] p-5 rounded-xl border border-[#E5E5E2] whitespace-pre-wrap word-break-all leading-relaxed">
                       {docContent?.content}
                     </pre>
                   )
                 )}
 
                 {activeTab === 'chunks' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div className="space-y-3">
                     {docContent?.chunks.map((chunk) => {
                       const isHighlighted = highlightChunkIndex === chunk.chunk_index || (highlightPageNumber && chunk.page_number === highlightPageNumber);
                       return (
                         <div
                           key={chunk.chunk_index}
-                          style={{
-                            background: isHighlighted ? 'rgba(56, 189, 248, 0.12)' : '#0F172A',
-                            border: isHighlighted ? '1px solid #38BDF8' : '1px solid #1E293B',
-                            borderRadius: '6px',
-                            padding: '14px'
-                          }}
+                          className={`rounded-xl p-4 border transition-all ${
+                            isHighlighted
+                              ? 'bg-[#6C63E6]/10 border-[#6C63E6]'
+                              : 'bg-[#F7F7F5] border-[#E5E5E2]'
+                          }`}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                            <span style={{ fontSize: '11px', fontWeight: '700', color: '#38BDF8' }}>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-bold text-[#6C63E6]">
                               Chunk #{chunk.chunk_index} {chunk.page_number ? `(Page ${chunk.page_number})` : ''}
                             </span>
                             {isHighlighted && (
-                              <span className="badge badge-dispute" style={{ fontSize: '10px' }}>
+                              <span className="badge badge-dispute text-[10px]">
                                 Citation Match Target
                               </span>
                             )}
                           </div>
-                          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', color: '#F8FAFC', whiteSpace: 'pre-wrap' }}>
+                          <p className="font-mono text-xs text-[#20242A] whitespace-pre-wrap">
                             {chunk.content}
                           </p>
                         </div>
@@ -286,16 +199,7 @@ export const EvidenceViewerModal: React.FC<EvidenceViewerModalProps> = ({
                 )}
 
                 {activeTab === 'raw_text' && (
-                  <pre style={{
-                    fontFamily: 'JetBrains Mono, monospace',
-                    fontSize: '12px',
-                    color: '#CBD5E1',
-                    background: '#0B1120',
-                    padding: '20px',
-                    borderRadius: '6px',
-                    border: '1px solid #1E293B',
-                    whiteSpace: 'pre-wrap'
-                  }}>
+                  <pre className="font-mono text-xs text-[#20242A] bg-[#F7F7F5] p-5 rounded-xl border border-[#E5E5E2] whitespace-pre-wrap">
                     {docContent?.content}
                   </pre>
                 )}
@@ -311,12 +215,12 @@ export const EvidenceViewerModal: React.FC<EvidenceViewerModalProps> = ({
 function FileIcon({ fileType }: { fileType: string }) {
   switch (fileType) {
     case 'PDF':
-      return <FileText size={20} color="#EF4444" />;
+      return <FileText className="w-5 h-5 text-rose-500" />;
     case 'CSV':
-      return <FileSpreadsheet size={20} color="#10B981" />;
+      return <FileSpreadsheet className="w-5 h-5 text-emerald-600" />;
     case 'EML':
-      return <Mail size={20} color="#F59E0B" />;
+      return <Mail className="w-5 h-5 text-amber-500" />;
     default:
-      return <FileCode size={20} color="#38BDF8" />;
+      return <FileCode className="w-5 h-5 text-[#6C63E6]" />;
   }
 }

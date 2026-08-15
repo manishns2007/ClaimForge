@@ -30,55 +30,48 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({
   ];
 
   return (
-    <div className="card-panel" style={{ marginBottom: '20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', borderBottom: '1px solid #1E293B', paddingBottom: '8px' }}>
-        <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#F8FAFC', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Award size={16} color="#10B981" />
-          SECTION 6 — DECISION INTELLIGENCE
+    <div className="bg-white border border-[#E5E5E2] rounded-2xl p-5 shadow-xs font-body mb-6">
+      <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#E5E5E2]">
+        <h3 className="text-xs font-bold text-[#20242A] flex items-center gap-1.5 uppercase tracking-wider">
+          <Award className="w-4 h-4 text-emerald-600" />
+          Section 6 — Decision Intelligence
         </h3>
       </div>
 
       {/* Primary Recommendation Banner */}
-      <div style={{
-        background: '#0B1120',
-        border: '1px solid #1E293B',
-        borderRadius: '6px',
-        padding: '16px',
-        textAlign: 'center',
-        marginBottom: '16px'
-      }}>
-        <div style={{ fontSize: '11px', color: '#94A3B8', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-          SYSTEM RECOMMENDATION
+      <div className="bg-[#F7F7F5] border border-[#E5E5E2] rounded-xl p-4 text-center mb-4">
+        <div className="text-[10px] text-[#737A80] font-semibold uppercase tracking-wider">
+          System Recommendation
         </div>
 
-        <div style={{ marginTop: '8px' }}>
+        <div className="mt-2">
           {recommendation === 'DISPUTE' && (
-            <div className="badge badge-dispute" style={{ padding: '8px 18px', fontSize: '15px' }}>
-              <CheckCircle2 size={18} /> DISPUTE
+            <div className="badge badge-dispute text-sm px-4 py-1.5 rounded-full inline-flex">
+              <CheckCircle2 className="w-4 h-4" /> DISPUTE
             </div>
           )}
           {recommendation === 'HUMAN_REVIEW' && (
-            <div className="badge badge-human-review" style={{ padding: '8px 18px', fontSize: '15px' }}>
-              <HelpCircle size={18} /> HUMAN REVIEW
+            <div className="badge badge-human-review text-sm px-4 py-1.5 rounded-full inline-flex">
+              <HelpCircle className="w-4 h-4" /> HUMAN REVIEW
             </div>
           )}
           {recommendation === 'DO_NOT_DISPUTE' && (
-            <div className="badge badge-do-not-dispute" style={{ padding: '8px 18px', fontSize: '15px' }}>
-              <XCircle size={18} /> DO NOT DISPUTE
+            <div className="badge badge-do-not-dispute text-sm px-4 py-1.5 rounded-full inline-flex">
+              <XCircle className="w-4 h-4" /> DO NOT DISPUTE
             </div>
           )}
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #1E293B' }}>
+        <div className="flex items-center justify-around mt-4 pt-3 border-t border-[#E5E5E2]">
           <div>
-            <div style={{ fontSize: '10px', color: '#64748B' }}>Score</div>
-            <div style={{ fontSize: '16px', fontWeight: '800', color: '#F8FAFC' }}>
-              {score} <span style={{ fontSize: '10px', color: '#64748B' }}>/ 100</span>
+            <div className="text-[10px] text-[#737A80]">Score</div>
+            <div className="text-base font-extrabold font-display text-[#20242A]">
+              {score} <span className="text-[10px] font-normal text-[#737A80]">/ 100</span>
             </div>
           </div>
           <div>
-            <div style={{ fontSize: '10px', color: '#64748B' }}>Expected Recovery</div>
-            <div style={{ fontSize: '16px', fontWeight: '800', color: '#10B981' }}>
+            <div className="text-[10px] text-[#737A80]">Expected Recovery</div>
+            <div className="text-base font-extrabold font-display text-emerald-600">
               ${investigation.total_expected_recovery.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </div>
           </div>
@@ -87,14 +80,14 @@ export const DecisionPanel: React.FC<DecisionPanelProps> = ({
 
       {/* Verification Status Checklist */}
       <div>
-        <div style={{ fontSize: '11px', fontWeight: '700', color: '#94A3B8', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.5px' }}>
+        <div className="text-[10px] font-bold text-[#737A80] uppercase tracking-wider mb-2">
           VERIFICATION STATUS
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <div className="space-y-1.5">
           {verificationItems.map((item, idx) => (
-            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#F8FAFC' }}>
-              <ShieldCheck size={14} color="#10B981" />
+            <div key={idx} className="flex items-center gap-2 text-xs text-[#20242A]">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               <span>{item.label}</span>
             </div>
           ))}

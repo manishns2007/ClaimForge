@@ -60,60 +60,33 @@ export const NewInvestigationModal: React.FC<NewInvestigationModalProps> = ({
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(5, 8, 15, 0.85)',
-      backdropFilter: 'blur(6px)',
-      zIndex: 1000,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '24px'
-    }}>
-      <div style={{
-        background: '#0F172A',
-        border: '1px solid #334155',
-        borderRadius: '8px',
-        width: '100%',
-        maxWidth: '560px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)'
-      }}>
+    <div className="fixed inset-0 z-[1000] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 font-body">
+      <div className="bg-white border border-[#E5E5E2] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
         {/* Modal Header */}
-        <div style={{
-          padding: '16px 20px',
-          borderBottom: '1px solid #1E293B',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: '#0B1120'
-        }}>
-          <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#F8FAFC', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <PlusCircle size={18} color="#38BDF8" />
+        <div className="px-6 py-4 border-b border-[#E5E5E2] flex items-center justify-between bg-[#F7F7F5]">
+          <h3 className="text-sm font-bold text-[#20242A] flex items-center gap-2">
+            <PlusCircle className="w-4 h-4 text-[#6C63E6]" />
             Create New Claim Investigation
           </h3>
           <button
             onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: '#94A3B8', cursor: 'pointer' }}
+            className="text-[#737A80] hover:text-[#20242A] bg-transparent border-none cursor-pointer"
           >
-            <X size={20} />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Form */}
-        <form onSubmit={handleSubmit} style={{ padding: '20px' }}>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {error && (
-            <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #EF4444', borderRadius: '4px', padding: '10px', color: '#EF4444', fontSize: '12px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <AlertCircle size={16} /> {error}
+            <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-rose-700 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
             </div>
           )}
 
           {/* Investigation Title */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94A3B8', marginBottom: '6px' }}>
+          <div>
+            <label className="block text-xs font-semibold text-[#737A80] mb-1.5">
               Investigation Title *
             </label>
             <input
@@ -121,37 +94,19 @@ export const NewInvestigationModal: React.FC<NewInvestigationModalProps> = ({
               placeholder="e.g. CAT 320 Excavator Excess Rental Billing Audit"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              style={{
-                width: '100%',
-                background: '#0B1120',
-                border: '1px solid #334155',
-                borderRadius: '4px',
-                padding: '8px 12px',
-                color: '#F8FAFC',
-                fontSize: '13px',
-                outline: 'none'
-              }}
+              className="w-full bg-[#F7F7F5] border border-[#E5E5E2] rounded-xl px-3.5 py-2.5 text-xs text-[#20242A] outline-none focus:ring-1 focus:ring-[#6C63E6]"
             />
           </div>
 
           {/* Industry Vertical */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94A3B8', marginBottom: '6px' }}>
+          <div>
+            <label className="block text-xs font-semibold text-[#737A80] mb-1.5">
               Industry Vertical
             </label>
             <select
               value={vertical}
               onChange={(e) => setVertical(e.target.value)}
-              style={{
-                width: '100%',
-                background: '#0B1120',
-                border: '1px solid #334155',
-                borderRadius: '4px',
-                padding: '8px 12px',
-                color: '#F8FAFC',
-                fontSize: '13px',
-                outline: 'none'
-              }}
+              className="w-full bg-[#F7F7F5] border border-[#E5E5E2] rounded-xl px-3.5 py-2.5 text-xs text-[#20242A] outline-none focus:ring-1 focus:ring-[#6C63E6] cursor-pointer"
             >
               <option value="EQUIPMENT_RENTAL">Equipment Rental</option>
               <option value="LOGISTICS">Logistics & Demurrage</option>
@@ -160,42 +115,35 @@ export const NewInvestigationModal: React.FC<NewInvestigationModalProps> = ({
           </div>
 
           {/* Upload Evidence Files */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#94A3B8', marginBottom: '6px' }}>
+          <div>
+            <label className="block text-xs font-semibold text-[#737A80] mb-1.5">
               Upload Evidence Documents (PDF, CSV, EML, TXT)
             </label>
-            <div style={{
-              border: '2px dashed #334155',
-              borderRadius: '6px',
-              padding: '20px',
-              textAlign: 'center',
-              background: '#0B1120',
-              cursor: 'pointer'
-            }}>
+            <div className="border-2 border-dashed border-[#E5E5E2] hover:border-[#6C63E6] transition-colors rounded-xl p-6 text-center bg-[#F7F7F5] cursor-pointer">
               <input
                 type="file"
                 multiple
                 accept=".pdf,.csv,.eml,.txt"
                 onChange={handleFileChange}
-                style={{ display: 'none' }}
+                className="hidden"
                 id="file-upload-input"
               />
-              <label htmlFor="file-upload-input" style={{ cursor: 'pointer' }}>
-                <Upload size={24} color="#38BDF8" style={{ margin: '0 auto 8px' }} />
-                <div style={{ fontSize: '12px', fontWeight: '600', color: '#F8FAFC' }}>
+              <label htmlFor="file-upload-input" className="cursor-pointer space-y-1 block">
+                <Upload className="w-6 h-6 text-[#6C63E6] mx-auto mb-1" />
+                <div className="text-xs font-semibold text-[#20242A]">
                   Click to select evidence files
                 </div>
-                <div style={{ fontSize: '11px', color: '#64748B', marginTop: '2px' }}>
+                <div className="text-[10px] text-[#737A80]">
                   Supported formats: Contract PDF, Invoice PDF, Telemetry CSV, Email EML
                 </div>
               </label>
             </div>
 
             {selectedFiles.length > 0 && (
-              <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div className="mt-2 space-y-1">
                 {selectedFiles.map((f, i) => (
-                  <div key={i} style={{ fontSize: '11px', color: '#38BDF8', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <FileText size={12} /> {f.name} ({(f.size / 1024).toFixed(1)} KB)
+                  <div key={i} className="text-xs text-[#6C63E6] font-medium flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5" /> {f.name} ({(f.size / 1024).toFixed(1)} KB)
                   </div>
                 ))}
               </div>
@@ -203,18 +151,18 @@ export const NewInvestigationModal: React.FC<NewInvestigationModalProps> = ({
           </div>
 
           {/* Form Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px', borderTop: '1px solid #1E293B', paddingTop: '14px' }}>
+          <div className="flex items-center justify-end gap-3 border-t border-[#E5E5E2] pt-4 mt-6">
             <button
               type="button"
               onClick={onClose}
-              className="btn-secondary"
+              className="btn-secondary text-xs py-2 px-4 rounded-full"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary"
+              className="btn-primary text-xs py-2 px-5 rounded-full"
             >
               {loading ? 'Creating & Launching Pipeline...' : 'Launch Investigation'}
             </button>

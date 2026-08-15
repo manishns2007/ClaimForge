@@ -17,28 +17,21 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   onOpenDocument
 }) => {
   return (
-    <div className="card-panel" style={{ marginBottom: '20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#F8FAFC', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Clock size={16} color="#38BDF8" />
-          SECTION 4 — RECONSTRUCTED INVESTIGATION TIMELINE
+    <div className="bg-white border border-[#E5E5E2] rounded-2xl p-5 shadow-xs font-body mb-6">
+      <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#E5E5E2]">
+        <h3 className="text-xs font-bold text-[#20242A] flex items-center gap-2 uppercase tracking-wider">
+          <Clock className="w-4 h-4 text-[#6C63E6]" />
+          Section 4 — Reconstructed Investigation Timeline
         </h3>
-        <span style={{ fontSize: '10px', color: '#94A3B8' }}>{timeline.length} Chronological Event(s)</span>
+        <span className="text-[10px] text-[#737A80] font-semibold">{timeline.length} Chronological Event(s)</span>
       </div>
 
-      <div style={{ position: 'relative', paddingLeft: '20px' }}>
-        {/* Timeline Line */}
-        <div style={{
-          position: 'absolute',
-          left: '7px',
-          top: '8px',
-          bottom: '8px',
-          width: '2px',
-          background: '#1E293B'
-        }} />
+      <div className="relative pl-5">
+        {/* Timeline Vertical Line */}
+        <div className="absolute left-[7px] top-2 bottom-2 w-0.5 bg-[#E5E5E2]" />
 
         {timeline.length === 0 ? (
-          <div style={{ padding: '20px', color: '#64748B', fontSize: '12px' }}>
+          <div className="py-6 text-center text-[#737A80] text-xs">
             No operational timeline events synthesized yet.
           </div>
         ) : (
@@ -49,26 +42,20 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
               : `Event #${idx + 1}`;
 
             return (
-              <div key={evt.id || idx} style={{ position: 'relative', marginBottom: '18px', paddingLeft: '12px' }}>
+              <div key={evt.id || idx} className="relative mb-4 pl-3">
                 {/* Node Bullet */}
-                <div style={{
-                  position: 'absolute',
-                  left: '-17px',
-                  top: '4px',
-                  width: '10px',
-                  height: '10px',
-                  borderRadius: '50%',
-                  background: getEventColor(evt.event_type),
-                  boxShadow: `0 0 8px ${getEventColor(evt.event_type)}`
-                }} />
+                <div 
+                  className="absolute -left-[17px] top-1.5 w-2.5 h-2.5 rounded-full border border-white"
+                  style={{ backgroundColor: getEventColor(evt.event_type) }}
+                />
 
-                <div style={{ background: '#0B1120', border: '1px solid #1E293B', borderRadius: '6px', padding: '10px 14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: '700', color: '#38BDF8' }}>
+                <div className="bg-[#F7F7F5] border border-[#E5E5E2] rounded-xl p-3.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-[#6C63E6]">
                         {tsDisplay}
                       </span>
-                      <span className="badge badge-medium" style={{ fontSize: '9px', background: 'rgba(56, 189, 248, 0.1)', color: '#38BDF8' }}>
+                      <span className="badge badge-medium text-[9px] bg-[#6C63E6]/10 text-[#6C63E6] border border-[#6C63E6]/25">
                         {evt.event_type}
                       </span>
                     </div>
@@ -76,25 +63,14 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                     {doc && (
                       <button
                         onClick={() => onOpenDocument(doc)}
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: '#64748B',
-                          cursor: 'pointer',
-                          fontSize: '10px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '3px'
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget.style.color = '#38BDF8')}
-                        onMouseLeave={(e) => (e.currentTarget.style.color = '#64748B')}
+                        className="text-[10px] text-[#737A80] hover:text-[#6C63E6] font-medium flex items-center gap-1 bg-transparent border-none cursor-pointer"
                       >
-                        <ExternalLink size={10} /> {doc.filename}
+                        <ExternalLink className="w-3 h-3" /> {doc.filename}
                       </button>
                     )}
                   </div>
 
-                  <div style={{ fontSize: '12px', color: '#F8FAFC', marginTop: '4px', fontWeight: '500' }}>
+                  <div className="text-xs font-semibold text-[#20242A] mt-1.5 leading-relaxed">
                     {evt.description}
                   </div>
                 </div>
@@ -108,8 +84,8 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
 };
 
 function getEventColor(type: string) {
-  if (type.includes('OFF_RENT') || type.includes('NOTICE')) return '#F59E0B';
-  if (type.includes('STOP') || type.includes('SHUTDOWN')) return '#EF4444';
-  if (type.includes('MOVE') || type.includes('PICKUP') || type.includes('DEPARTURE')) return '#8B5CF6';
-  return '#10B981';
+  if (type.includes('OFF_RENT') || type.includes('NOTICE')) return '#D97706';
+  if (type.includes('STOP') || type.includes('SHUTDOWN')) return '#DC2626';
+  if (type.includes('MOVE') || type.includes('PICKUP') || type.includes('DEPARTURE')) return '#6C63E6';
+  return '#059669';
 }

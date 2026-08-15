@@ -6,21 +6,21 @@ import {
 
 export const AITransparencyPanel: React.FC = () => {
   return (
-    <div className="card-panel" style={{ marginBottom: '20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', borderBottom: '1px solid #1E293B', paddingBottom: '8px' }}>
-        <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#F8FAFC', display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Cpu size={16} color="#06B6D4" />
-          SECTION 7 — SYSTEM ARCHITECTURE TRANSPARENCY
+    <div className="bg-white border border-[#E5E5E2] rounded-2xl p-5 shadow-xs font-body mb-6">
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#E5E5E2]">
+        <h3 className="text-xs font-bold text-[#20242A] flex items-center gap-1.5 uppercase tracking-wider">
+          <Cpu className="w-4 h-4 text-[#6C63E6]" />
+          Section 7 — System Architecture Transparency
         </h3>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+      <div className="grid grid-cols-2 gap-3">
         {/* AI Column */}
-        <div style={{ background: 'rgba(6, 182, 212, 0.05)', border: '1px solid rgba(6, 182, 212, 0.2)', borderRadius: '6px', padding: '10px' }}>
-          <div style={{ fontSize: '10px', fontWeight: '700', color: '#22D3EE', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <Cpu size={12} /> AI INVESTIGATION
+        <div className="bg-[#6C63E6]/10 border border-[#6C63E6]/25 rounded-xl p-3">
+          <div className="text-[10px] font-bold text-[#6C63E6] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+            <Cpu className="w-3 h-3" /> AI Investigation
           </div>
-          <ul style={{ fontSize: '10px', color: '#94A3B8', paddingLeft: '14px', lineHeight: 1.6 }}>
+          <ul className="text-[11px] text-[#737A80] space-y-1 pl-3.5 list-disc leading-relaxed">
             <li>Semantic document parsing</li>
             <li>Contract clause interpretation</li>
             <li>Timeline event synthesis</li>
@@ -29,11 +29,11 @@ export const AITransparencyPanel: React.FC = () => {
         </div>
 
         {/* Deterministic Column */}
-        <div style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '6px', padding: '10px' }}>
-          <div style={{ fontSize: '10px', fontWeight: '700', color: '#34D399', textTransform: 'uppercase', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <ShieldCheck size={12} /> DETERMINISTIC CODE
+        <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-3">
+          <div className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+            <ShieldCheck className="w-3 h-3" /> Deterministic Code
           </div>
-          <ul style={{ fontSize: '10px', color: '#94A3B8', paddingLeft: '14px', lineHeight: 1.6 }}>
+          <ul className="text-[11px] text-[#737A80] space-y-1 pl-3.5 list-disc leading-relaxed">
             <li>Financial discrepancy math</li>
             <li>Scoring & recovery model</li>
             <li>Hard contradiction overrides</li>
