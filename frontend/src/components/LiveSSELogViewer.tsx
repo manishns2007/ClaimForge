@@ -17,14 +17,18 @@ export const LiveSSELogViewer: React.FC<LiveSSELogViewerProps> = ({
   investigationId,
   isRunning
 }) => {
-  const [logs, setLogs] = useState<InvestigationEventLog[]>([]);
+  const [allLogs, setAllLogs] = useState<InvestigationEventLog[]>([]);
+  const [visibleCount, setVisibleCount] = useState<number>(0);
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Initial fetch of persisted events
     fetchEvents(investigationId)
-      .then(setLogs)
+      .then((data) => {
+        setAllLogs(data);
+        setVisibleCount(0);
+      })
       .catch((err) => console.error('Error fetching initial events:', err));
 
     // Connect to real-time SSE stream
@@ -34,7 +38,7 @@ export const LiveSSELogViewer: React.FC<LiveSSELogViewerProps> = ({
       try {
         const data = JSON.parse(event.data);
         if (data && data.event_type) {
-          setLogs((prev) => {
+          setAllLogs((prev) => {
             if (prev.some((e) => e.id === data.id)) return prev;
             return [...prev, data];
           });
@@ -54,11 +58,21 @@ export const LiveSSELogViewer: React.FC<LiveSSELogViewerProps> = ({
     };
   }, [investigationId, isRunning]);
 
+  // Sequential line-by-line reveal timer
+  useEffect(() => {
+    if (visibleCount < allLogs.length) {
+      const timer = setTimeout(() => {
+        setVisibleCount((prev) => prev + 1);
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [visibleCount, allLogs]);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [logs]);
+  }, [visibleCount]);
 
   return (
     <div className="bg-white border border-[#E5E5E2] rounded-2xl p-4 shadow-xs font-body mb-6">
@@ -90,7 +104,7 @@ export const LiveSSELogViewer: React.FC<LiveSSELogViewerProps> = ({
               <span className="w-2.5 h-2.5 rounded-full bg-[#27C93F] inline-block" />
             </div>
             <span className="text-[10px] text-[#4E7570] font-medium">
-              claimforge@agent:~$
+              nexops@protocol:~$
             </span>
           </div>
 
@@ -101,22 +115,22 @@ export const LiveSSELogViewer: React.FC<LiveSSELogViewerProps> = ({
           >
             <div className="flex items-center gap-1.5 text-[11px] pb-1">
               <span className="text-[#00F2FE] font-bold">$</span>
-              <span className="text-[#00F2FE] font-bold">claimforge audit {investigationId}</span>
+              <span className="text-[#00F2FE] font-bold">nexops compile escrow.intent --network bch</span>
             </div>
             <div className="text-[#4E7570] text-[10px] mb-2 font-semibold">
-              ClaimForge Agent Protocol v2.4.0
+              NexOps Protocol v1.2.4
             </div>
 
-            {logs.length === 0 ? (
+            {allLogs.length === 0 ? (
               <div className="text-[#4E7570] text-[11px]">
                 <span className="text-[#4E7570] font-bold">[→]</span> Initializing agent event stream...
               </div>
             ) : (
-              logs.map((log, idx) => {
+              allLogs.slice(0, visibleCount).map((log, idx) => {
                 const isSuccess = log.event_type.includes('COMPLETED') || log.event_type.includes('CREATED') || log.event_type.includes('CALCULATED');
                 const isWarn = log.event_type.includes('CONTRADICTION') || log.event_type.includes('REJECTED');
                 return (
-                  <div key={log.id || idx} className="flex items-start gap-2 text-[11px]">
+                  <div key={log.id || idx} className="flex items-start gap-2 text-[11px] animate-fadeIn">
                     {isSuccess ? (
                       <span className="text-[#00E676] font-bold flex-shrink-0">[✓]</span>
                     ) : isWarn ? (
@@ -135,11 +149,16 @@ export const LiveSSELogViewer: React.FC<LiveSSELogViewerProps> = ({
               })
             )}
 
-            {/* Active Cursor Footer */}
-            <div className="pt-2 mt-2 border-t border-[#0E2421] text-[10px] text-[#4E7570] flex items-center justify-between">
-              <span>Status: PASS | Determinism verified</span>
-              <span className="w-2 h-3.5 bg-[#00F2FE] inline-block animate-pulse" />
-            </div>
+            {/* Deployment Package Footer & Active Cursor */}
+            {visibleCount >= allLogs.length && allLogs.length > 0 && (
+              <div className="pt-2 mt-2 border-t border-[#0E2421] text-[10px] space-y-1">
+                <div className="text-[#D1EBE7] font-bold">Deployment Package:</div>
+                <div className="text-[#4E7570] flex items-center justify-between">
+                  <span>Contract: Escrow (0x7a4c ... 5a)</span>
+                  <span className="w-2 h-3.5 bg-[#00F2FE] inline-block animate-pulse" />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Bot, 
   FileText, 
@@ -32,7 +32,9 @@ interface LogEntry {
 
 export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => void }> = ({ onOpenWorkspace }) => {
   const [isScanning, setIsScanning] = useState<boolean>(true);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [visibleLogCount, setVisibleLogCount] = useState<number>(0);
+  const terminalScrollRef = useRef<HTMLDivElement>(null);
+
   const [agents, setAgents] = useState<AgentState[]>([
     {
       id: 'agent-1',
@@ -72,8 +74,8 @@ export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => voi
     }
   ]);
 
-  // Initial terminal state resembling NexOps/ClaimForge CLI execution
-  const initialLogs: LogEntry[] = [
+  // Full sequential list of terminal log items to reveal one line at a time
+  const sequentialLogs: LogEntry[] = [
     {
       timestamp: '09:14:01',
       agent: 'Ingestion Agent',
@@ -86,100 +88,82 @@ export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => voi
       agent: 'Ingestion Agent',
       statusType: 'success',
       tag: 'VALIDATED',
-      formattedMessage: <>Intent validated <span className="text-[#4E7570]">|</span> name=Escrow_SLA <span className="text-[#4E7570]">|</span> version=1.0</>
+      formattedMessage: <>Intent validated <span className="text-[#4E7570]">|</span> name=Escrow <span className="text-[#4E7570]">|</span> version=1.0</>
     },
     {
       timestamp: '09:14:03',
       agent: 'Reasoning Agent',
       statusType: 'progress',
-      tag: 'TELEMETRY',
-      formattedMessage: <>Generating ClaimIR intermediate representation <span className="text-[#4E7570]">...</span></>
+      tag: 'IR_GEN',
+      formattedMessage: <>Generating NexIR intermediate representation <span className="text-[#4E7570]">...</span></>
     },
     {
       timestamp: '09:14:04',
       agent: 'Reasoning Agent',
       statusType: 'success',
-      tag: 'IR_GEN',
-      formattedMessage: <>ClaimIR generated <span className="text-[#4E7570]">|</span> ops=47 <span className="text-[#4E7570]">|</span> size=2.3KB</>
+      tag: 'IR_DONE',
+      formattedMessage: <>NexIR generated <span className="text-[#4E7570]">|</span> ops=47 <span className="text-[#4E7570]">|</span> size=2.3KB</>
     },
     {
       timestamp: '09:14:05',
       agent: 'Contradiction Hunter',
       statusType: 'progress',
-      tag: 'ANALYSIS',
-      formattedMessage: <>Running TollGate security & contradiction analysis <span className="text-[#4E7570]">...</span></>
+      tag: 'BYTECODE',
+      formattedMessage: <>Compiling to CashScript bytecode <span className="text-[#4E7570]">...</span></>
     },
     {
       timestamp: '09:14:06',
       agent: 'Contradiction Hunter',
       statusType: 'success',
-      tag: 'ANALYSIS_PASS',
-      formattedMessage: <>Logic flaws: <span className="text-[#00E676]">PASS</span> <span className="text-[#4E7570]">|</span> Signatures: <span className="text-[#00E676]">PASS</span></>
+      tag: 'BYTECODE_DONE',
+      formattedMessage: <>Bytecode compiled <span className="text-[#4E7570]">|</span> hash=0x7a4c9b2f1e8d3c5a <span className="text-[#4E7570]">|</span> size=1.8KB</>
     },
     {
       timestamp: '09:14:07',
       agent: 'Scoring Engine',
+      statusType: 'progress',
+      tag: 'SECURITY',
+      formattedMessage: <>Running TollGate security analysis <span className="text-[#4E7570]">...</span></>
+    },
+    {
+      timestamp: '09:14:08',
+      agent: 'Scoring Engine',
+      statusType: 'success',
+      tag: 'SECURITY_PASS',
+      formattedMessage: <>Logic flaws: <span className="text-[#00E676]">PASS</span> <span className="text-[#4E7570]">|</span> Signatures: <span className="text-[#00E676]">PASS</span></>
+    },
+    {
+      timestamp: '09:14:09',
+      agent: 'Scoring Engine',
+      statusType: 'success',
+      tag: 'CHECKS_PASS',
+      formattedMessage: <>Balance checks: <span className="text-[#00E676]">PASS</span> <span className="text-[#4E7570]">|</span> Reentrancy: <span className="text-[#00E676]">PASS</span></>
+    },
+    {
+      timestamp: '09:14:10',
+      agent: 'Scoring Engine',
       statusType: 'success',
       tag: 'DETERMINISM',
-      formattedMessage: <>Determinism verified <span className="text-[#4E7570]">|</span> Reproducible: <span className="text-[#00E676]">YES</span> <span className="text-[#4E7570]">|</span> Recovery=$125,000.00</>
+      formattedMessage: <>Determinism verified <span className="text-[#4E7570]">|</span> Reproducible: <span className="text-[#00E676]">YES</span></>
     }
   ];
 
-  useEffect(() => {
-    setLogs(initialLogs);
-  }, []);
-
-  // Real-time log streaming simulation
+  // Sequential reveal line-by-line timer
   useEffect(() => {
     if (!isScanning) return;
 
-    const sampleStream: LogEntry[] = [
-      {
-        timestamp: '',
-        agent: 'Ingestion Agent',
-        statusType: 'progress',
-        tag: 'INGEST',
-        formattedMessage: <>Parsing Clause 14.2 SLA uptime cutoff specification <span className="text-[#4E7570]">...</span></>
-      },
-      {
-        timestamp: '',
-        agent: 'Reasoning Agent',
-        statusType: 'success',
-        tag: 'MATCHED',
-        formattedMessage: <>Telemetry verified <span className="text-[#4E7570]">|</span> Outage=4h12m <span className="text-[#4E7570]">|</span> PeakWindow=OCT24</>
-      },
-      {
-        timestamp: '',
-        agent: 'Contradiction Hunter',
-        statusType: 'warn',
-        tag: 'DISCREPANCY',
-        formattedMessage: <>Vendor billed full rate ($125,000) <span className="text-[#4E7570]">|</span> Hard_Overrides=NONE <span className="text-[#4E7570]">|</span> Flag=PASS</>
-      },
-      {
-        timestamp: '',
-        agent: 'Scoring Engine',
-        statusType: 'success',
-        tag: 'RECOVERY',
-        formattedMessage: <>Calculated exposure <span className="text-[#4E7570]">|</span> Value=$125,000.00 <span className="text-[#4E7570]">|</span> Confidence=94%</>
-      }
-    ];
-
-    let index = 0;
     const interval = setInterval(() => {
-      const item = sampleStream[index % sampleStream.length];
-      const now = new Date().toLocaleTimeString();
-
-      setLogs((prev) => [
-        ...prev,
-        {
-          ...item,
-          timestamp: now
+      setVisibleLogCount((prev) => {
+        if (prev < sequentialLogs.length) {
+          return prev + 1;
         }
-      ].slice(-15));
+        return prev;
+      });
 
+      // Update agent progress bars sequentially
       setAgents((prev) => prev.map((a) => {
         if (a.status === 'running') {
-          const nextProg = Math.min(100, a.progress + Math.floor(Math.random() * 4) + 1);
+          const nextProg = Math.min(100, a.progress + Math.floor(Math.random() * 3) + 1);
           return {
             ...a,
             progress: nextProg,
@@ -189,15 +173,20 @@ export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => voi
         }
         return a;
       }));
-
-      index++;
-    }, 2000);
+    }, 700);
 
     return () => clearInterval(interval);
   }, [isScanning]);
 
+  // Smooth auto-scroll as new lines appear
+  useEffect(() => {
+    if (terminalScrollRef.current) {
+      terminalScrollRef.current.scrollTop = terminalScrollRef.current.scrollHeight;
+    }
+  }, [visibleLogCount]);
+
   const handleRestartScan = () => {
-    setLogs(initialLogs);
+    setVisibleLogCount(0);
     setAgents([
       { id: 'agent-1', name: 'Document Ingestion Agent', role: 'Parses PDF contracts, CSV logs & EML emails', status: 'running', progress: 15, currentDocument: 'Master_Service_Agreement_v4.pdf', itemsProcessed: 20 },
       { id: 'agent-2', name: 'Event Reasoning Agent', role: 'Correlates outage telemetry with SLA terms', status: 'running', progress: 10, currentDocument: 'Telemetry_Outage_Oct24.csv', itemsProcessed: 110 },
@@ -313,7 +302,7 @@ export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => voi
         </span>
       </div>
 
-      {/* 5. CUSTOM TERMINAL LOG WINDOW MATCHING SCREENSHOT */}
+      {/* 5. SEQUENTIAL TERMINAL LOG WINDOW MATCHING USER SCREENSHOT */}
       <div className="rounded-xl border border-[#0F3830] bg-[#061110] shadow-2xl overflow-hidden font-mono text-xs">
         {/* macOS Terminal Window Header Bar */}
         <div className="bg-[#040D0C] border-b border-[#0E2421] px-4 py-2.5 flex items-center justify-between">
@@ -323,24 +312,27 @@ export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => voi
             <span className="w-3 h-3 rounded-full bg-[#27C93F] inline-block" />
           </div>
           <span className="text-[11px] text-[#4E7570] font-medium tracking-wide">
-            claimforge@protocol:~$
+            nexops@protocol:~$
           </span>
         </div>
 
         {/* Inner Terminal Execution Log Body */}
-        <div className="p-5 bg-[#061110] text-[#D1EBE7] space-y-2.5 max-h-72 overflow-y-auto leading-relaxed">
+        <div 
+          ref={terminalScrollRef}
+          className="p-5 bg-[#061110] text-[#D1EBE7] space-y-2.5 max-h-80 overflow-y-auto leading-relaxed"
+        >
           {/* Command prompt header line */}
           <div className="flex items-center gap-2 text-xs pb-1">
             <span className="text-[#00F2FE] font-bold">$</span>
-            <span className="text-[#00F2FE] font-bold">claimforge compile audit.intent --network mainnet</span>
+            <span className="text-[#00F2FE] font-bold">nexops compile escrow.intent --network bch</span>
           </div>
           <div className="text-[#4E7570] text-[11px] font-semibold mb-3">
-            ClaimForge Protocol v2.4.0
+            NexOps Protocol v1.2.4
           </div>
 
-          {/* Terminal log entries */}
-          {logs.map((log, idx) => (
-            <div key={idx} className="flex items-start gap-2.5">
+          {/* Sequential line-by-line log entries */}
+          {sequentialLogs.slice(0, visibleLogCount).map((log, idx) => (
+            <div key={idx} className="flex items-start gap-2.5 animate-fadeIn">
               {log.statusType === 'progress' && (
                 <span className="text-[#4E7570] font-bold flex-shrink-0">[→]</span>
               )}
@@ -356,14 +348,16 @@ export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => voi
             </div>
           ))}
 
-          {/* Deployment Package Footer & Active Cursor */}
-          <div className="pt-3 mt-2 border-t border-[#0E2421] space-y-1">
-            <div className="text-[#D1EBE7] font-bold">Deployment Package:</div>
-            <div className="text-[#4E7570] flex items-center gap-1">
-              <span>Contract: Escrow (0x7a4c...5a)</span>
-              <span className="w-2 h-4 bg-[#00F2FE] inline-block animate-pulse ml-1" />
+          {/* Deployment Package Summary & Cursor Block appears once all lines reveal */}
+          {visibleLogCount >= sequentialLogs.length && (
+            <div className="pt-3 mt-2 border-t border-[#0E2421] space-y-1 animate-fadeIn">
+              <div className="text-[#D1EBE7] font-bold">Deployment Package:</div>
+              <div className="text-[#4E7570] flex items-center gap-1">
+                <span>Contract: Escrow (0x7a4c ... 5a)</span>
+                <span className="w-2.5 h-4 bg-[#00F2FE] inline-block animate-pulse ml-1" />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {onOpenWorkspace && (
