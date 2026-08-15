@@ -347,16 +347,7 @@ export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => voi
             </div>
           ))}
 
-          {/* Deployment Package Summary & Cursor Block appears once all lines reveal */}
-          {visibleLogCount >= sequentialLogs.length && (
-            <div className="pt-3 mt-2 border-t border-[#0E2421] space-y-1 animate-fadeIn">
-              <div className="text-[#D1EBE7] font-bold">Deployment Package:</div>
-              <div className="text-[#4E7570] flex items-center gap-1">
-                <span>Contract: Escrow (0x7a4c ... 5a)</span>
-                <span className="w-2.5 h-4 bg-[#00F2FE] inline-block animate-pulse ml-1" />
-              </div>
-            </div>
-          )}
+
         </div>
 
 

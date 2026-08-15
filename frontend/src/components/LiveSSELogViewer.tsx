@@ -149,16 +149,7 @@ export const LiveSSELogViewer: React.FC<LiveSSELogViewerProps> = ({
               })
             )}
 
-            {/* Deployment Package Footer & Active Cursor */}
-            {visibleCount >= allLogs.length && allLogs.length > 0 && (
-              <div className="pt-2 mt-2 border-t border-[#0E2421] text-[10px] space-y-1">
-                <div className="text-[#D1EBE7] font-bold">Deployment Package:</div>
-                <div className="text-[#4E7570] flex items-center justify-between">
-                  <span>Contract: Escrow (0x7a4c ... 5a)</span>
-                  <span className="w-2 h-3.5 bg-[#00F2FE] inline-block animate-pulse" />
-                </div>
-              </div>
-            )}
+
           </div>
         </div>
       )}
