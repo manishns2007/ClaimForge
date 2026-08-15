@@ -282,8 +282,7 @@ def test_llm_hallucination_triggers_grounding_fallback(db_session):
     db_session.commit()
 
     # Mock PydanticAI agent to return a hallucinated $99,999.00 amount
-    mock_pai_result = MagicMock()
-    mock_pai_result.data = FinancialAgentResponse(
+    mock_resp = FinancialAgentResponse(
         status="COMPLETED",
         line_items=[
             FinancialLineItem(
@@ -301,6 +300,9 @@ def test_llm_hallucination_triggers_grounding_fallback(db_session):
             )
         ]
     )
+    mock_pai_result = MagicMock()
+    mock_pai_result.output = mock_resp
+    mock_pai_result.data = mock_resp
 
     mock_agent_instance = MagicMock()
     mock_agent_instance.run_sync.return_value = mock_pai_result
