@@ -32,7 +32,7 @@ interface HeroSectionProps {
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) => {
-  const { user, isAuthenticated, openAuthModal } = useAuth();
+  const { isAuthenticated, openAuthModal } = useAuth();
   const [activeNav, setActiveNav] = useState<string>('Home');
   const [contactEmail, setContactEmail] = useState<string>('');
   const [contactSubmitted, setContactSubmitted] = useState<boolean>(false);
@@ -104,34 +104,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
           ))}
         </nav>
 
-        {/* CTA Buttons */}
-        <div className="flex items-center gap-3">
-          {isAuthenticated && user ? (
-            <Button
-              onClick={() => onLaunchPlatform?.()}
-              className="rounded-full px-5 text-sm font-medium cursor-pointer flex items-center gap-2"
-            >
-              <span>Launch Platform</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            </Button>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => handleTriggerAuthOrPlatform('signin')}
-                className="text-xs font-semibold text-muted-foreground hover:text-foreground px-3 py-2 rounded-full transition-colors cursor-pointer bg-transparent border-none"
-              >
-                Sign In
-              </button>
-              <Button 
-                onClick={() => handleTriggerAuthOrPlatform('signup')}
-                className="rounded-full px-5 text-sm font-medium cursor-pointer shadow-xs"
-              >
-                Get Started
-              </Button>
-            </>
-          )}
-        </div>
       </header>
 
       {/* ----------------- HERO SECTION (#home) ----------------- */}
