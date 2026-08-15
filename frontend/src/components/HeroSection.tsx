@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Play, 
@@ -16,40 +16,98 @@ import {
   Layers, 
   FileText, 
   SlidersHorizontal,
-  FolderGit2
+  FolderGit2,
+  Check,
+  Zap,
+  Shield,
+  Bot,
+  Mail,
+  ArrowRight,
+  Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MultiAgentScanner } from './MultiAgentScanner';
 
-export const HeroSection: React.FC = () => {
+interface HeroSectionProps {
+  onLaunchPlatform?: () => void;
+}
+
+export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) => {
+  const [activeNav, setActiveNav] = useState<string>('Home');
+  const [contactEmail, setContactEmail] = useState<string>('');
+  const [contactSubmitted, setContactSubmitted] = useState<boolean>(false);
+
+  const handleNavClick = (sectionId: string, name: string) => {
+    setActiveNav(name);
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleTriggerDemo = () => {
+    if (onLaunchPlatform) {
+      onLaunchPlatform();
+    } else {
+      const scannerElem = document.getElementById('live-demo');
+      if (scannerElem) {
+        scannerElem.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
   return (
-    <div className="min-h-screen w-full flex flex-col bg-background overflow-y-auto font-body relative">
+    <div className="min-h-screen w-full flex flex-col bg-background overflow-y-auto font-body relative scroll-smooth">
       {/* ----------------- NAVBAR ----------------- */}
-      <header className="flex items-center justify-between px-6 md:px-12 lg:px-20 py-5 font-body flex-shrink-0 z-20 relative">
+      <header className="flex items-center justify-between px-6 md:px-12 lg:px-20 py-5 font-body flex-shrink-0 z-20 relative sticky top-0 bg-background/80 backdrop-blur-md border-b border-border/40">
         {/* Left: Logo */}
-        <div className="flex items-center gap-2">
+        <a 
+          href="#home" 
+          onClick={(e) => { e.preventDefault(); handleNavClick('home', 'Home'); }}
+          className="flex items-center gap-2"
+        >
           <span className="text-xl font-semibold tracking-tight text-foreground">
             ✦ ClaimForge
           </span>
-        </div>
+        </a>
 
         {/* Right: Nav Links (hidden on mobile) */}
-        <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
-          <a href="#home" className="hover:text-foreground transition-colors">Home</a>
-          <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
-          <a href="#about" className="hover:text-foreground transition-colors">About</a>
-          <a href="#contact" className="hover:text-foreground transition-colors">Contact</a>
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
+          {[
+            { id: 'home', name: 'Home' },
+            { id: 'pricing', name: 'Pricing' },
+            { id: 'about', name: 'About' },
+            { id: 'contact', name: 'Contact' },
+          ].map((link) => (
+            <a
+              key={link.id}
+              href={`#${link.id}`}
+              onClick={(e) => {
+                e.preventDefault();
+                handleNavClick(link.id, link.name);
+              }}
+              className={`transition-colors text-sm hover:text-foreground ${
+                activeNav === link.name ? 'text-foreground font-semibold underline underline-offset-4' : ''
+              }`}
+            >
+              {link.name}
+            </a>
+          ))}
         </nav>
 
         {/* CTA Button */}
-        <div className="flex items-center">
-          <Button className="rounded-full px-5 text-sm font-medium">
+        <div className="flex items-center gap-3">
+          <Button 
+            onClick={handleTriggerDemo}
+            className="rounded-full px-5 text-sm font-medium cursor-pointer"
+          >
             Get Started
           </Button>
         </div>
       </header>
 
-      {/* ----------------- HERO SECTION ----------------- */}
-      <main className="relative flex-1 flex flex-col items-center w-full z-10 px-4 pt-2 pb-12">
+      {/* ----------------- HERO SECTION (#home) ----------------- */}
+      <section id="home" className="relative flex-1 flex flex-col items-center w-full z-10 px-4 pt-2 pb-12">
         {/* Background Video */}
         <video
           autoPlay
@@ -90,19 +148,23 @@ export const HeroSection: React.FC = () => {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="mt-5 flex items-center gap-3"
           >
-            <Button className="rounded-full px-6 py-5 text-sm font-medium font-body shadow-md">
+            <Button 
+              onClick={handleTriggerDemo}
+              className="rounded-full px-6 py-5 text-sm font-medium font-body shadow-md cursor-pointer"
+            >
               Book a demo
             </Button>
             <Button
               variant="ghost"
-              className="h-11 w-11 rounded-full border-0 bg-background shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:bg-background/80 p-0 flex items-center justify-center"
+              onClick={handleTriggerDemo}
+              className="h-11 w-11 rounded-full border-0 bg-background shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:bg-background/80 p-0 flex items-center justify-center cursor-pointer"
               aria-label="Play video"
             >
               <Play className="h-4 w-4 fill-foreground text-foreground ml-0.5" />
             </Button>
           </motion.div>
 
-          {/* 4. Dashboard Preview (Custom Coded React UI) */}
+          {/* 4. Dashboard Preview (Interactive React UI - Clicking enters live demo!) */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -110,7 +172,8 @@ export const HeroSection: React.FC = () => {
             className="mt-8 w-full max-w-5xl flex-1 flex flex-col justify-start"
           >
             <div
-              className="rounded-2xl overflow-hidden p-3 md:p-4 w-full flex-1 flex flex-col backdrop-blur-md"
+              onClick={handleTriggerDemo}
+              className="rounded-2xl overflow-hidden p-3 md:p-4 w-full flex-1 flex flex-col backdrop-blur-md cursor-pointer transition-transform hover:scale-[1.005]"
               style={{
                 background: 'rgba(255, 255, 255, 0.4)',
                 border: '1px solid rgba(255, 255, 255, 0.5)',
@@ -263,7 +326,7 @@ export const HeroSection: React.FC = () => {
                           Create Invoice
                         </button>
                       </div>
-                      <span className="text-[10px] text-muted-foreground font-medium cursor-pointer">
+                      <span className="text-[10px] text-muted-foreground font-medium">
                         + Customize
                       </span>
                     </div>
@@ -416,7 +479,198 @@ export const HeroSection: React.FC = () => {
           </motion.div>
 
         </div>
-      </main>
+      </section>
+
+      {/* ----------------- LIVE AI AGENTS & SCANNER DEMO SECTION ----------------- */}
+      <section id="live-demo" className="max-w-6xl mx-auto px-4 py-10 w-full z-20 relative">
+        <MultiAgentScanner onOpenWorkspace={onLaunchPlatform} />
+      </section>
+
+      {/* ----------------- PRICING SECTION (#pricing) ----------------- */}
+      <section id="pricing" className="max-w-6xl mx-auto px-4 py-16 w-full z-20 relative border-t border-border/40">
+        <div className="text-center max-w-xl mx-auto mb-12">
+          <h2 className="font-display text-4xl font-bold text-foreground">Simple, Transparent Pricing</h2>
+          <p className="text-muted-foreground text-sm mt-2">
+            Discover recoverable commercial claims automatically. Pay for performance, not setup.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Tier 1 */}
+          <div className="bg-background border border-border rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:border-accent/50 transition-colors">
+            <div>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Starter Audit</span>
+              <div className="text-3xl font-bold font-display text-foreground mt-2">$0 <span className="text-xs font-normal text-muted-foreground">/ month</span></div>
+              <p className="text-xs text-muted-foreground mt-2">Perfect for single vendor audits up to $250k exposure.</p>
+              
+              <ul className="mt-6 space-y-2 text-xs text-foreground">
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> Up to 50 Evidence Files</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> 2 Autonomous Agents</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> Basic Discrepancy Scoring</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> Exportable Audit Briefs</li>
+              </ul>
+            </div>
+
+            <Button onClick={handleTriggerDemo} className="w-full rounded-xl mt-8 font-medium">
+              Start Free Audit
+            </Button>
+          </div>
+
+          {/* Tier 2 (Popular) */}
+          <div className="bg-background border-2 border-accent rounded-2xl p-6 shadow-lg flex flex-col justify-between relative">
+            <span className="absolute -top-3 right-6 bg-accent text-accent-foreground text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase">
+              Most Popular
+            </span>
+            <div>
+              <span className="text-xs font-semibold text-accent uppercase tracking-wider">Enterprise Pro</span>
+              <div className="text-3xl font-bold font-display text-foreground mt-2">$499 <span className="text-xs font-normal text-muted-foreground">/ month</span></div>
+              <p className="text-xs text-muted-foreground mt-2">For high-volume commercial contracts and continuous telemetry auditing.</p>
+              
+              <ul className="mt-6 space-y-2 text-xs text-foreground">
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> Unlimited Evidence Ingestion</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> All 4 Autonomous AI Agents</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> Real-time SSE Execution Stream</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> Hard Overrides & Contradictions</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-accent" /> Direct Legal Package Generation</li>
+              </ul>
+            </div>
+
+            <Button onClick={handleTriggerDemo} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 rounded-xl mt-8 font-medium">
+              Launch Pro Demo <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+
+          {/* Tier 3 */}
+          <div className="bg-background border border-border rounded-2xl p-6 shadow-sm flex flex-col justify-between hover:border-accent/50 transition-colors">
+            <div>
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">API & Custom</span>
+              <div className="text-3xl font-bold font-display text-foreground mt-2">Custom <span className="text-xs font-normal text-muted-foreground">/ volume</span></div>
+              <p className="text-xs text-muted-foreground mt-2">Dedicated infrastructure for enterprise insurance and Fortune 500 teams.</p>
+              
+              <ul className="mt-6 space-y-2 text-xs text-foreground">
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> Custom LLM & Rule Tuning</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> On-Premise SQLite/Postgres DB</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> Dedicated Account Manager</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500" /> 99.99% SLA Guarantee</li>
+              </ul>
+            </div>
+
+            <Button onClick={handleTriggerDemo} variant="outline" className="w-full rounded-xl mt-8 font-medium border-border">
+              Contact Enterprise
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* ----------------- ABOUT SECTION (#about) ----------------- */}
+      <section id="about" className="max-w-6xl mx-auto px-4 py-16 w-full z-20 relative border-t border-border/40">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div>
+            <span className="text-xs font-semibold text-accent uppercase tracking-wider">Autonomous AI Architecture</span>
+            <h2 className="font-display text-4xl font-bold text-foreground mt-2 leading-tight">
+              AI Investigates. Code Verifies. Human Decides.
+            </h2>
+            <p className="text-muted-foreground text-sm mt-4 leading-relaxed">
+              ClaimForge is an autonomous financial claim discovery platform that continuously scans fragmented commercial evidence—PDF contracts, CSV telemetry, EML emails, and invoices.
+            </p>
+
+            <div className="mt-6 space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-accent/10 text-accent flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Bot className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-foreground">Document Ingestion Agent</h4>
+                  <p className="text-[11px] text-muted-foreground">Parses page citations, PDF clauses, and telemetry columns with zero manual tagging.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Shield className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-foreground">Contradiction Engine</h4>
+                  <p className="text-[11px] text-muted-foreground">Applies deterministic rule overrides to prevent false positive disputes before legal action.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Zap className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-foreground">Score-Weighted Recovery Model</h4>
+                  <p className="text-[11px] text-muted-foreground">Calculates actual dollar value recovery potential based on evidence strength and contract precedent.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-secondary/40 border border-border rounded-2xl p-6 shadow-sm">
+            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-accent" /> Live System Performance
+            </h3>
+            <div className="space-y-3 font-mono text-xs">
+              <div className="bg-background p-3 rounded-lg border border-border flex items-center justify-between">
+                <span className="text-muted-foreground">Evidence Processing Time</span>
+                <span className="text-emerald-500 font-bold">1.4 seconds / doc</span>
+              </div>
+              <div className="bg-background p-3 rounded-lg border border-border flex items-center justify-between">
+                <span className="text-muted-foreground">Contradiction Accuracy</span>
+                <span className="text-accent font-bold">99.8% precision</span>
+              </div>
+              <div className="bg-background p-3 rounded-lg border border-border flex items-center justify-between">
+                <span className="text-muted-foreground">Disputed Value Discovered</span>
+                <span className="text-foreground font-bold">$14.2M+ total</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ----------------- CONTACT SECTION (#contact) ----------------- */}
+      <section id="contact" className="max-w-4xl mx-auto px-4 py-16 w-full z-20 relative border-t border-border/40">
+        <div className="bg-background border border-border rounded-2xl p-8 shadow-xl text-center">
+          <Mail className="w-10 h-10 text-accent mx-auto mb-3" />
+          <h2 className="font-display text-3xl font-bold text-foreground">Get Started with ClaimForge</h2>
+          <p className="text-muted-foreground text-xs mt-2 max-w-md mx-auto">
+            Ready to uncover hidden financial recovery in your commercial contracts? Enter your work email below.
+          </p>
+
+          {contactSubmitted ? (
+            <div className="mt-6 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 rounded-xl p-4 text-xs font-semibold">
+              Thank you! Our AI Claim Specialist will reach out to {contactEmail} shortly.
+            </div>
+          ) : (
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                setContactSubmitted(true);
+              }}
+              className="mt-6 flex items-center gap-2 max-w-md mx-auto"
+            >
+              <input
+                type="email"
+                required
+                placeholder="jane@company.com"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                className="flex-1 bg-secondary border border-border rounded-xl px-4 py-2.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              <Button type="submit" className="rounded-xl px-5 text-xs font-semibold py-2.5">
+                Get Early Access
+              </Button>
+            </form>
+          )}
+        </div>
+      </section>
+
+      {/* ----------------- FOOTER ----------------- */}
+      <footer className="border-t border-border/40 py-8 px-6 text-center text-xs text-muted-foreground z-20 relative">
+        <p>© 2026 ClaimForge Inc. All rights reserved. Autonomous Pre-Dispute Intelligence Engine.</p>
+      </footer>
+
     </div>
   );
 };
