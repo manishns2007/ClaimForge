@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Play, 
   ChevronDown, 
   Search, 
   Bell, 
@@ -26,13 +25,14 @@ import {
   Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { MultiAgentScanner } from './MultiAgentScanner';
+import { useAuth } from '../context/AuthContext';
 
 interface HeroSectionProps {
   onLaunchPlatform?: () => void;
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) => {
+  const { user, isAuthenticated, openAuthModal } = useAuth();
   const [activeNav, setActiveNav] = useState<string>('Home');
   const [contactEmail, setContactEmail] = useState<string>('');
   const [contactSubmitted, setContactSubmitted] = useState<boolean>(false);
@@ -45,15 +45,24 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
     }
   };
 
-  const handleTriggerDemo = () => {
-    if (onLaunchPlatform) {
-      onLaunchPlatform();
-    } else {
-      const scannerElem = document.getElementById('live-demo');
-      if (scannerElem) {
-        scannerElem.scrollIntoView({ behavior: 'smooth' });
-      }
+  const handleBookDemo = () => {
+    setActiveNav('Pricing');
+    const pricingElem = document.getElementById('pricing');
+    if (pricingElem) {
+      pricingElem.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const handleTriggerAuthOrPlatform = (mode: 'signin' | 'signup' = 'signup') => {
+    if (isAuthenticated) {
+      if (onLaunchPlatform) onLaunchPlatform();
+    } else {
+      openAuthModal(mode);
+    }
+  };
+
+  const handleTriggerDemo = () => {
+    handleTriggerAuthOrPlatform('signup');
   };
 
   return (
@@ -95,14 +104,33 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
           ))}
         </nav>
 
-        {/* CTA Button */}
+        {/* CTA Buttons */}
         <div className="flex items-center gap-3">
-          <Button 
-            onClick={handleTriggerDemo}
-            className="rounded-full px-5 text-sm font-medium cursor-pointer"
-          >
-            Get Started
-          </Button>
+          {isAuthenticated && user ? (
+            <Button
+              onClick={() => onLaunchPlatform?.()}
+              className="rounded-full px-5 text-sm font-medium cursor-pointer flex items-center gap-2"
+            >
+              <span>Launch Platform</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            </Button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => handleTriggerAuthOrPlatform('signin')}
+                className="text-xs font-semibold text-muted-foreground hover:text-foreground px-3 py-2 rounded-full transition-colors cursor-pointer bg-transparent border-none"
+              >
+                Sign In
+              </button>
+              <Button 
+                onClick={() => handleTriggerAuthOrPlatform('signup')}
+                className="rounded-full px-5 text-sm font-medium cursor-pointer shadow-xs"
+              >
+                Get Started
+              </Button>
+            </>
+          )}
         </div>
       </header>
 
@@ -146,21 +174,21 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="mt-5 flex items-center gap-3"
+            className="mt-5 flex items-center gap-3 z-30 relative"
           >
             <Button 
-              onClick={handleTriggerDemo}
-              className="rounded-full px-6 py-5 text-sm font-medium font-body shadow-md cursor-pointer"
+              variant="outline"
+              onClick={handleBookDemo}
+              className="rounded-full px-6 py-5 text-sm font-medium font-body shadow-xs bg-background/90 hover:bg-background backdrop-blur-md border-border/80 text-foreground cursor-pointer transition-all"
             >
               Book a demo
             </Button>
             <Button
-              variant="ghost"
-              onClick={handleTriggerDemo}
-              className="h-11 w-11 rounded-full border-0 bg-background shadow-[0_2px_12px_rgba(0,0,0,0.08)] hover:bg-background/80 p-0 flex items-center justify-center cursor-pointer"
-              aria-label="Play video"
+              onClick={() => handleTriggerAuthOrPlatform('signup')}
+              className="rounded-full px-6 py-5 text-sm font-medium font-body shadow-md cursor-pointer flex items-center gap-2 transition-all hover:scale-[1.02]"
             >
-              <Play className="h-4 w-4 fill-foreground text-foreground ml-0.5" />
+              <span>Get Started</span>
+              <ArrowRight className="w-4 h-4" />
             </Button>
           </motion.div>
 
@@ -481,10 +509,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onLaunchPlatform }) =>
         </div>
       </section>
 
-      {/* ----------------- LIVE AI AGENTS & SCANNER DEMO SECTION ----------------- */}
-      <section id="live-demo" className="max-w-6xl mx-auto px-4 py-10 w-full z-20 relative">
-        <MultiAgentScanner onOpenWorkspace={onLaunchPlatform} />
-      </section>
+
 
       {/* ----------------- PRICING SECTION (#pricing) ----------------- */}
       <section id="pricing" className="max-w-6xl mx-auto px-4 py-16 w-full z-20 relative border-t border-border/40">

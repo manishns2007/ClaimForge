@@ -29,7 +29,7 @@ interface LogEntry {
   formattedMessage: React.ReactNode;
 }
 
-export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => void }> = ({ onOpenWorkspace }) => {
+export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => void }> = () => {
   const [isScanning, setIsScanning] = useState<boolean>(true);
   const [visibleLogCount, setVisibleLogCount] = useState<number>(0);
   const terminalScrollRef = useRef<HTMLDivElement>(null);
