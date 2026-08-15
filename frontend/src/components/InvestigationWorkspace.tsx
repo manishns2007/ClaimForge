@@ -73,21 +73,21 @@ export const InvestigationWorkspace: React.FC<InvestigationWorkspaceProps> = ({
 
   if (loading) {
     return (
-      <div style={{ padding: '60px', textAlign: 'center', color: '#94A3B8' }}>
-        <RefreshCw size={32} className="animate-spin" style={{ margin: '0 auto 12px', color: '#38BDF8' }} />
-        <div style={{ fontSize: '15px', fontWeight: '600', color: '#F8FAFC' }}>Loading Investigation Workspace...</div>
-        <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px' }}>Reconstructing evidence, timeline, and contradiction records</div>
+      <div className="py-20 text-center text-[#737A80] space-y-3 font-body">
+        <RefreshCw size={32} className="animate-spin mx-auto text-[#6C63E6]" />
+        <div className="text-base font-bold text-[#20242A]">Loading Investigation Workspace...</div>
+        <div className="text-xs text-[#737A80]">Reconstructing evidence, timeline, and contradiction records</div>
       </div>
     );
   }
 
   if (error || !details) {
     return (
-      <div style={{ padding: '60px', textAlign: 'center', color: '#EF4444' }}>
-        <AlertCircle size={32} style={{ margin: '0 auto 12px' }} />
-        <div style={{ fontSize: '16px', fontWeight: '700' }}>Unable to load investigation workspace</div>
-        <div style={{ fontSize: '12px', color: '#94A3B8', marginTop: '4px', marginBottom: '16px' }}>{error}</div>
-        <button onClick={onBackToDashboard} className="btn-secondary">
+      <div className="py-20 text-center text-rose-600 space-y-3 font-body">
+        <AlertCircle size={32} className="mx-auto" />
+        <div className="text-lg font-bold text-[#20242A]">Unable to load investigation workspace</div>
+        <div className="text-xs text-[#737A80] max-w-sm mx-auto">{error}</div>
+        <button onClick={onBackToDashboard} className="btn-secondary text-xs py-2 px-4 rounded-full">
           <ArrowLeft size={14} /> Return to Executive Overview
         </button>
       </div>
@@ -97,26 +97,14 @@ export const InvestigationWorkspace: React.FC<InvestigationWorkspaceProps> = ({
   const { investigation, claim, agent_findings, contradictions, evidence, timeline, contract_rules, charges } = details;
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1800px', margin: '0 auto' }}>
+    <div className="p-6 md:p-8 max-w-[1800px] mx-auto font-body bg-[#F7F7F5] space-y-6">
       {/* Back Button */}
-      <div style={{ marginBottom: '16px' }}>
+      <div>
         <button
           onClick={onBackToDashboard}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: '#94A3B8',
-            cursor: 'pointer',
-            fontSize: '12px',
-            fontWeight: '600',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#38BDF8')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = '#94A3B8')}
+          className="text-xs font-semibold text-[#737A80] hover:text-[#6C63E6] transition-colors inline-flex items-center gap-1.5 bg-transparent border-none cursor-pointer"
         >
-          <ArrowLeft size={14} /> Back to Executive Dashboard
+          <ArrowLeft size={14} /> Back to Executive Overview
         </button>
       </div>
 
@@ -128,12 +116,7 @@ export const InvestigationWorkspace: React.FC<InvestigationWorkspaceProps> = ({
       />
 
       {/* 3-Column Analyst Workstation Layout */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '280px 1fr 340px',
-        gap: '20px',
-        alignItems: 'start'
-      }}>
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr_340px] gap-6 items-start">
         {/* LEFT COLUMN: Evidence Vault */}
         <div>
           <EvidenceVault
@@ -144,7 +127,7 @@ export const InvestigationWorkspace: React.FC<InvestigationWorkspaceProps> = ({
         </div>
 
         {/* CENTER COLUMN: Core Analysis Workspace */}
-        <div>
+        <div className="space-y-6">
           {/* Section 1: Claim & Financial Reconciliation Summary */}
           <ClaimSummary
             investigation={investigation}
@@ -176,7 +159,7 @@ export const InvestigationWorkspace: React.FC<InvestigationWorkspaceProps> = ({
         </div>
 
         {/* RIGHT COLUMN: Decision Intelligence & Transparency */}
-        <div>
+        <div className="space-y-6">
           {/* Section 6: Decision Intelligence */}
           <DecisionPanel
             investigation={investigation}

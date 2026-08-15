@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  ShieldAlert,
   BarChart3,
   Search,
   PlusCircle,
@@ -30,80 +29,35 @@ export const Navbar: React.FC<NavbarProps> = ({
   isSeeding
 }) => {
   return (
-    <header style={{
-      background: '#0B1120',
-      borderBottom: '1px solid #1E293B',
-      padding: '0 24px',
-      height: '60px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      position: 'sticky',
-      top: 0,
-      zIndex: 100
-    }}>
+    <header className="bg-white border-b border-[#E5E5E2] px-6 h-16 flex items-center justify-between sticky top-0 z-50 shadow-sm font-body">
       {/* Brand & Subtitle */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-        <div
+      <div className="flex items-center gap-6">
+        <button
           onClick={() => onNavigate('dashboard')}
-          style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}
+          className="flex items-center gap-2 text-left group border-none bg-transparent cursor-pointer"
         >
-          <div style={{
-            background: 'linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%)',
-            borderRadius: '6px',
-            width: '32px',
-            height: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 0 12px rgba(6, 182, 212, 0.4)'
-          }}>
-            <ShieldAlert size={20} color="#FFFFFF" />
-          </div>
-          <div>
-            <div style={{
-              fontWeight: '700',
-              fontSize: '15px',
-              letterSpacing: '1px',
-              color: '#F8FAFC',
-              lineHeight: 1.1
-            }}>
-              CLAIMFORGE
-            </div>
-            <div style={{
-              fontSize: '10px',
-              fontWeight: '500',
-              color: '#94A3B8',
-              letterSpacing: '0.5px'
-            }}>
-              INVESTIGATION INTELLIGENCE
-            </div>
-          </div>
-        </div>
+          <span className="text-xl font-semibold tracking-tight text-[#20242A]">
+            ✦ ClaimForge
+          </span>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#737A80] bg-[#F7F7F5] px-2 py-0.5 rounded border border-[#E5E5E2] ml-1">
+            Intelligence
+          </span>
+        </button>
 
         {/* Vertical Divider */}
-        <div style={{ width: '1px', height: '24px', background: '#334155' }} />
+        <div className="w-px h-6 bg-[#E5E5E2]" />
 
         {/* View Switcher Tabs */}
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="flex items-center gap-2">
           <button
             onClick={() => onNavigate('dashboard')}
-            style={{
-              background: currentView === 'dashboard' ? '#1E293B' : 'transparent',
-              color: currentView === 'dashboard' ? '#38BDF8' : '#94A3B8',
-              border: currentView === 'dashboard' ? '1px solid #334155' : '1px solid transparent',
-              borderRadius: '4px',
-              padding: '6px 14px',
-              fontSize: '12px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.2s ease'
-            }}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              currentView === 'dashboard'
+                ? 'bg-[#6C63E6]/10 text-[#6C63E6] border border-[#6C63E6]/30 shadow-xs'
+                : 'text-[#737A80] hover:text-[#20242A] hover:bg-[#F7F7F5] border border-transparent'
+            }`}
           >
-            <BarChart3 size={14} />
+            <BarChart3 className="w-3.5 h-3.5" />
             Executive Overview
           </button>
 
@@ -117,33 +71,24 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onNavigate('dashboard');
               }
             }}
-            style={{
-              background: currentView === 'investigation' ? '#1E293B' : 'transparent',
-              color: currentView === 'investigation' ? '#38BDF8' : '#94A3B8',
-              border: currentView === 'investigation' ? '1px solid #334155' : '1px solid transparent',
-              borderRadius: '4px',
-              padding: '6px 14px',
-              fontSize: '12px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.2s ease'
-            }}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer ${
+              currentView === 'investigation'
+                ? 'bg-[#6C63E6]/10 text-[#6C63E6] border border-[#6C63E6]/30 shadow-xs'
+                : 'text-[#737A80] hover:text-[#20242A] hover:bg-[#F7F7F5] border border-transparent'
+            }`}
           >
-            <Search size={14} />
+            <Search className="w-3.5 h-3.5" />
             Investigation Workspace
           </button>
         </div>
       </div>
 
-      {/* Case Selector & Actions */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        {/* Quick Case Switcher Dropdown */}
+      {/* Quick Case Switcher & Actions */}
+      <div className="flex items-center gap-3">
+        {/* Case Switcher Dropdown */}
         {investigations.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#0F172A', border: '1px solid #334155', borderRadius: '4px', padding: '4px 8px' }}>
-            <FolderOpen size={14} color="#64748B" />
+          <div className="flex items-center gap-2 bg-[#F7F7F5] border border-[#E5E5E2] rounded-lg px-2.5 py-1 text-xs">
+            <FolderOpen className="w-3.5 h-3.5 text-[#737A80]" />
             <select
               value={selectedInvestigationId || ''}
               onChange={(e) => {
@@ -151,20 +96,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onNavigate('investigation', e.target.value);
                 }
               }}
-              style={{
-                background: 'transparent',
-                color: '#F8FAFC',
-                border: 'none',
-                fontSize: '12px',
-                fontWeight: '500',
-                outline: 'none',
-                cursor: 'pointer',
-                maxWidth: '220px'
-              }}
+              className="bg-transparent text-[#20242A] border-none text-xs font-medium outline-none cursor-pointer max-w-[200px] truncate"
             >
               <option value="" disabled>Select Investigation...</option>
               {investigations.map(inv => (
-                <option key={inv.id} value={inv.id} style={{ background: '#0F172A', color: '#F8FAFC' }}>
+                <option key={inv.id} value={inv.id} className="bg-white text-[#20242A]">
                   {inv.title} ({inv.status})
                 </option>
               ))}
@@ -172,20 +108,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         )}
 
-        {/* Backend Status Indicator */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          background: 'rgba(16, 185, 129, 0.1)',
-          border: '1px solid rgba(16, 185, 129, 0.25)',
-          borderRadius: '4px',
-          padding: '4px 10px',
-          fontSize: '11px',
-          color: '#34D399',
-          fontWeight: '500'
-        }}>
-          <CheckCircle2 size={13} />
+        {/* Backend Connected Indicator (Subtle green status pill) */}
+        <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200/80 rounded-full px-3 py-1 text-xs font-medium">
+          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
           <span>Backend Connected</span>
         </div>
 
@@ -194,22 +119,25 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={onSeedDemoCases}
           disabled={isSeeding}
           title="Populate Case A, Case B, Case C demo datasets in SQLite"
-          className="btn-secondary"
-          style={{ padding: '6px 12px', fontSize: '11px' }}
+          className="btn-secondary text-xs py-1.5 px-3.5 rounded-full"
         >
-          <RefreshCw size={13} className={isSeeding ? 'animate-spin' : ''} />
+          <RefreshCw className={`w-3.5 h-3.5 ${isSeeding ? 'animate-spin' : ''}`} />
           {isSeeding ? 'Seeding Cases...' : 'Seed Demo Cases'}
         </button>
 
         {/* New Investigation Button */}
         <button
           onClick={onOpenUploadModal}
-          className="btn-primary"
-          style={{ padding: '6px 14px', fontSize: '11px' }}
+          className="btn-primary text-xs py-1.5 px-4 rounded-full"
         >
-          <PlusCircle size={14} />
+          <PlusCircle className="w-3.5 h-3.5" />
           New Investigation
         </button>
+
+        {/* User Avatar */}
+        <div className="w-8 h-8 rounded-full bg-[#E5E5E2] text-[#20242A] font-semibold text-xs flex items-center justify-center border border-[#D4D4D0] ml-1">
+          JB
+        </div>
       </div>
     </header>
   );

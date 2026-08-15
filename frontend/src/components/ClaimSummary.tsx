@@ -16,95 +16,63 @@ export const ClaimSummary: React.FC<ClaimSummaryProps> = ({ investigation, claim
   const reasonText = claim?.reason || 'Calculated off-rent billing discrepancy post-notice cutoff.';
 
   return (
-    <div className="card-panel" style={{ marginBottom: '20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-        <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#F8FAFC', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Scale size={16} color="#38BDF8" />
-          SECTION 1 — CLAIM & FINANCIAL RECONCILIATION SUMMARY
+    <div className="bg-white border border-[#E5E5E2] rounded-2xl p-5 shadow-xs font-body mb-6">
+      <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#E5E5E2]">
+        <h3 className="text-xs font-bold text-[#20242A] flex items-center gap-2 uppercase tracking-wider">
+          <Scale className="w-4 h-4 text-[#6C63E6]" />
+          Section 1 — Claim & Financial Reconciliation Summary
         </h3>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{
-            background: 'rgba(6, 182, 212, 0.15)',
-            color: '#22D3EE',
-            border: '1px solid rgba(6, 182, 212, 0.3)',
-            padding: '2px 8px',
-            borderRadius: '4px',
-            fontSize: '10px',
-            fontWeight: '700',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px'
-          }}>
-            <Cpu size={12} /> AI ANALYSIS
+        <div className="flex items-center gap-2">
+          <span className="bg-[#6C63E6]/10 text-[#6C63E6] border border-[#6C63E6]/25 px-2.5 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1">
+            <Cpu className="w-3 h-3" /> AI ANALYSIS
           </span>
-          <span style={{
-            background: 'rgba(16, 185, 129, 0.15)',
-            color: '#34D399',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
-            padding: '2px 8px',
-            borderRadius: '4px',
-            fontSize: '10px',
-            fontWeight: '700',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px'
-          }}>
-            <ShieldCheck size={12} /> VERIFIED BY RULE ENGINE
+          <span className="bg-emerald-50 text-emerald-700 border border-emerald-200/80 px-2.5 py-0.5 rounded-full text-[10px] font-semibold flex items-center gap-1">
+            <ShieldCheck className="w-3 h-3" /> VERIFIED BY RULE ENGINE
           </span>
         </div>
       </div>
 
       {/* Grid of Key Metrics */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '12px',
-        marginBottom: '16px'
-      }}>
-        <div style={{ background: '#0B1120', padding: '12px', borderRadius: '4px', border: '1px solid #1E293B' }}>
-          <div style={{ fontSize: '11px', color: '#94A3B8' }}>Billed Original Amount</div>
-          <div style={{ fontSize: '16px', fontWeight: '700', color: '#F8FAFC', marginTop: '2px' }}>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <div className="bg-[#F7F7F5] border border-[#E5E5E2] rounded-xl p-3.5">
+          <div className="text-xs text-[#737A80] font-medium">Billed Original Amount</div>
+          <div className="text-lg font-bold font-display text-[#20242A] mt-1">
             ${investigation.total_analyzed_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
         </div>
 
-        <div style={{ background: '#0B1120', padding: '12px', borderRadius: '4px', border: '1px solid #1E293B' }}>
-          <div style={{ fontSize: '11px', color: '#94A3B8' }}>Disputed Excess Amount</div>
-          <div style={{ fontSize: '16px', fontWeight: '700', color: '#F59E0B', marginTop: '2px' }}>
+        <div className="bg-[#F7F7F5] border border-[#E5E5E2] rounded-xl p-3.5">
+          <div className="text-xs text-[#737A80] font-medium">Disputed Excess Amount</div>
+          <div className="text-lg font-bold font-display text-amber-600 mt-1">
             ${investigation.total_disputed_amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
         </div>
 
-        <div style={{ background: '#0B1120', padding: '12px', borderRadius: '4px', border: '1px solid #1E293B' }}>
-          <div style={{ fontSize: '11px', color: '#94A3B8' }}>Expected Recovery</div>
-          <div style={{ fontSize: '16px', fontWeight: '700', color: '#10B981', marginTop: '2px' }}>
+        <div className="bg-[#F7F7F5] border border-[#E5E5E2] rounded-xl p-3.5">
+          <div className="text-xs text-[#737A80] font-medium">Expected Recovery</div>
+          <div className="text-lg font-bold font-display text-emerald-600 mt-1">
             ${investigation.total_expected_recovery.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
         </div>
 
-        <div style={{ background: '#0B1120', padding: '12px', borderRadius: '4px', border: '1px solid #1E293B' }}>
-          <div style={{ fontSize: '11px', color: '#94A3B8' }}>Recoverability Score</div>
-          <div style={{ fontSize: '16px', fontWeight: '700', color: '#38BDF8', marginTop: '2px' }}>
+        <div className="bg-[#F7F7F5] border border-[#E5E5E2] rounded-xl p-3.5">
+          <div className="text-xs text-[#737A80] font-medium">Recoverability Score</div>
+          <div className="text-lg font-bold font-display text-[#6C63E6] mt-1">
             {claim ? Math.round(claim.recoverability_score * 100) : 0} / 100
           </div>
         </div>
       </div>
 
       {/* Deterministic Explanation Callout */}
-      <div style={{
-        background: '#0B1120',
-        borderLeft: '4px solid #38BDF8',
-        padding: '12px 16px',
-        borderRadius: '0 4px 4px 0'
-      }}>
-        <div style={{ fontSize: '11px', fontWeight: '700', color: '#38BDF8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+      <div className="bg-[#F7F7F5] border-l-4 border-[#6C63E6] border-y border-r border-[#E5E5E2] p-4 rounded-r-xl">
+        <div className="text-[10px] font-bold text-[#6C63E6] uppercase tracking-wider">
           Deterministic Engine Audit Explanation:
         </div>
-        <div style={{ fontSize: '13px', color: '#F8FAFC', marginTop: '4px', fontFamily: 'monospace' }}>
+        <div className="text-xs font-semibold text-[#20242A] mt-1 font-mono">
           "{reasonText}"
         </div>
-        <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px' }}>
+        <div className="text-[11px] text-[#737A80] mt-1">
           Financial reconciliation calculated by deterministic Python engine based on normalized contract rules and telemetry timestamps.
         </div>
       </div>

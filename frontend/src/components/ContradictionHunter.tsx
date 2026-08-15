@@ -19,94 +19,74 @@ export const ContradictionHunter: React.FC<ContradictionHunterProps> = ({
   const hasCritical = contradictions.some(c => c.severity === 'CRITICAL');
 
   return (
-    <div className="card-panel" style={{
-      marginBottom: '20px',
-      border: hasCritical ? '1px solid #EF4444' : '1px solid #1E293B',
-      background: hasCritical ? 'rgba(239, 68, 68, 0.04)' : '#0F172A'
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-        <h3 style={{ fontSize: '14px', fontWeight: '700', color: hasCritical ? '#EF4444' : '#F8FAFC', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <ShieldAlert size={18} color={hasCritical ? '#EF4444' : '#F59E0B'} />
-          SECTION 5 — ADVERSARIAL EVIDENCE & CONTRADICTION HUNTER
+    <div className={`bg-white border rounded-2xl p-5 shadow-xs font-body mb-6 ${
+      hasCritical ? 'border-rose-300' : 'border-[#E5E5E2]'
+    }`}>
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-[#E5E5E2]">
+        <h3 className="text-xs font-bold text-[#20242A] flex items-center gap-2 uppercase tracking-wider">
+          <ShieldAlert className={`w-4 h-4 ${hasCritical ? 'text-rose-600' : 'text-amber-500'}`} />
+          Section 5 — Adversarial Evidence & Contradiction Hunter
         </h3>
 
-        <span style={{ fontSize: '11px', color: '#94A3B8' }}>
-          Active Adversarial Search Engine
+        <span className="text-[10px] text-[#737A80] font-semibold">
+          Active Adversarial Engine
         </span>
       </div>
 
-      <p style={{ fontSize: '12px', color: '#94A3B8', marginBottom: '16px' }}>
+      <p className="text-xs text-[#737A80] mb-4">
         The system actively searched for counter-evidence, contract amendments, or operational records that could invalidate the proposed recovery.
       </p>
 
       {contradictions.length === 0 ? (
-        <div style={{
-          background: 'rgba(16, 185, 129, 0.08)',
-          border: '1px solid rgba(16, 185, 129, 0.25)',
-          borderRadius: '6px',
-          padding: '16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
-          <CheckCircle2 size={20} color="#34D399" />
+        <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-4 flex items-center gap-3">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
           <div>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: '#34D399' }}>
-              NO CONTRADICTIONS DISCOVERED
+            <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
+              No Contradictions Discovered
             </div>
-            <div style={{ fontSize: '11px', color: '#CBD5E1', marginTop: '2px' }}>
+            <div className="text-xs text-[#20242A] mt-0.5">
               Adversarial agent scanned all uploaded contract clauses, emails, and telemetry files. No counter-evidence was found to invalidate the claim.
             </div>
           </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div className="space-y-3">
           {contradictions.map((c) => {
             const isCritical = c.severity === 'CRITICAL';
             return (
               <div
                 key={c.id}
-                style={{
-                  background: isCritical ? 'rgba(239, 68, 68, 0.12)' : '#0B1120',
-                  border: isCritical ? '1px solid #EF4444' : '1px solid #334155',
-                  borderRadius: '6px',
-                  padding: '16px'
-                }}
+                className={`rounded-xl p-4 border ${
+                  isCritical 
+                    ? 'bg-rose-50/80 border-rose-200/80' 
+                    : 'bg-[#F7F7F5] border-[#E5E5E2]'
+                }`}
               >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
                     <span className={`badge ${isCritical ? 'badge-critical' : c.severity === 'HIGH' ? 'badge-high' : 'badge-medium'}`}>
-                      <AlertTriangle size={12} /> {c.severity} SEVERITY CONTRADICTION
+                      <AlertTriangle className="w-3 h-3" /> {c.severity} SEVERITY
                     </span>
-                    <span style={{ fontSize: '11px', fontWeight: '600', color: '#F8FAFC', fontFamily: 'monospace' }}>
+                    <span className="text-xs font-semibold text-[#20242A] font-mono">
                       {c.contradiction_type}
                     </span>
                   </div>
                 </div>
 
-                <div style={{ fontSize: '13px', color: '#F8FAFC', fontWeight: '600', lineHeight: 1.5 }}>
+                <div className="text-xs font-semibold text-[#20242A] leading-relaxed">
                   {c.description}
                 </div>
 
                 {/* Recommendation Override Notice */}
                 {isCritical && (
-                  <div style={{
-                    marginTop: '12px',
-                    background: '#0F172A',
-                    border: '1px dashed #EF4444',
-                    borderRadius: '4px',
-                    padding: '10px 12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <XCircle size={16} color="#EF4444" />
+                  <div className="mt-3 bg-white border border-rose-200 rounded-lg p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <XCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
                       <div>
-                        <div style={{ fontSize: '11px', fontWeight: '700', color: '#EF4444', textTransform: 'uppercase' }}>
-                          RECOMMENDATION OVERRIDE: DO NOT DISPUTE
+                        <div className="text-[10px] font-bold text-rose-700 uppercase tracking-wider">
+                          Recommendation Override: DO NOT DISPUTE
                         </div>
-                        <div style={{ fontSize: '11px', color: '#94A3B8' }}>
+                        <div className="text-[11px] text-[#737A80]">
                           Deterministic pipeline overrode recovery score because contract amendment invalidates claim.
                         </div>
                       </div>

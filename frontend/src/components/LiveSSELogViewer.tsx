@@ -61,55 +61,42 @@ export const LiveSSELogViewer: React.FC<LiveSSELogViewerProps> = ({
   }, [logs]);
 
   return (
-    <div className="card-panel" style={{ padding: '12px' }}>
+    <div className="bg-white border border-[#E5E5E2] rounded-2xl p-4 shadow-xs font-body">
       <div
         onClick={() => setIsExpanded(!isExpanded)}
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
+        className="flex items-center justify-between cursor-pointer"
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Terminal size={14} color="#38BDF8" />
-          <span style={{ fontSize: '12px', fontWeight: '700', color: '#F8FAFC' }}>
+        <div className="flex items-center gap-2">
+          <Terminal className="w-4 h-4 text-[#6C63E6]" />
+          <span className="text-xs font-bold text-[#20242A]">
             Real-Time Agent Execution Stream
           </span>
           {isRunning && (
-            <span className="badge badge-medium animate-pulse" style={{ fontSize: '9px' }}>
+            <span className="badge badge-medium animate-pulse text-[9px]">
               <Activity size={10} /> Live Stream Active
             </span>
           )}
         </div>
-        {isExpanded ? <ChevronUp size={16} color="#94A3B8" /> : <ChevronDown size={16} color="#94A3B8" />}
+        {isExpanded ? <ChevronUp className="w-4 h-4 text-[#737A80]" /> : <ChevronDown className="w-4 h-4 text-[#737A80]" />}
       </div>
 
       {isExpanded && (
         <div
           ref={scrollRef}
-          style={{
-            marginTop: '10px',
-            background: '#090D16',
-            border: '1px solid #1E293B',
-            borderRadius: '4px',
-            padding: '10px',
-            maxHeight: '200px',
-            overflowY: 'auto',
-            fontFamily: 'JetBrains Mono, monospace',
-            fontSize: '11px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '6px'
-          }}
+          className="mt-3 bg-[#1E242B] border border-[#333942] rounded-xl p-3 max-h-52 overflow-y-auto font-mono text-[11px] space-y-1.5"
         >
           {logs.length === 0 ? (
-            <div style={{ color: '#64748B' }}>No execution events recorded yet.</div>
+            <div className="text-slate-400">No execution events recorded yet.</div>
           ) : (
             logs.map((log, idx) => (
-              <div key={log.id || idx} style={{ display: 'flex', gap: '8px', lineHeight: 1.4 }}>
-                <span style={{ color: '#64748B', flexShrink: 0 }}>
+              <div key={log.id || idx} className="flex items-start gap-2 leading-relaxed">
+                <span className="text-slate-500 text-[10px] flex-shrink-0">
                   {new Date(log.timestamp).toLocaleTimeString()}
                 </span>
-                <span style={{ color: getEventTypeColor(log.event_type), fontWeight: '600', flexShrink: 0 }}>
+                <span style={{ color: getEventTypeColor(log.event_type) }} className="font-semibold flex-shrink-0">
                   [{log.event_type}]
                 </span>
-                <span style={{ color: '#F8FAFC', wordBreak: 'break-word' }}>
+                <span className="text-slate-200 word-break-all">
                   {log.message}
                 </span>
               </div>
@@ -123,7 +110,7 @@ export const LiveSSELogViewer: React.FC<LiveSSELogViewerProps> = ({
 
 function getEventTypeColor(type: string) {
   if (type.includes('COMPLETED') || type.includes('CREATED')) return '#34D399';
-  if (type.includes('FAILED') || type.includes('REJECTED')) return '#EF4444';
-  if (type.includes('CONTRADICTION')) return '#F59E0B';
-  return '#38BDF8';
+  if (type.includes('FAILED') || type.includes('REJECTED')) return '#F87171';
+  if (type.includes('CONTRADICTION')) return '#FBBF24';
+  return '#818CF8';
 }
