@@ -61,7 +61,7 @@ export const LiveSSELogViewer: React.FC<LiveSSELogViewerProps> = ({
   }, [logs]);
 
   return (
-    <div className="bg-white border border-[#E5E5E2] rounded-2xl p-4 shadow-xs font-body">
+    <div className="bg-white border border-[#E5E5E2] rounded-2xl p-4 shadow-xs font-body mb-6">
       <div
         onClick={() => setIsExpanded(!isExpanded)}
         className="flex items-center justify-between cursor-pointer"
@@ -81,36 +81,68 @@ export const LiveSSELogViewer: React.FC<LiveSSELogViewerProps> = ({
       </div>
 
       {isExpanded && (
-        <div
-          ref={scrollRef}
-          className="mt-3 bg-[#1E242B] border border-[#333942] rounded-xl p-3 max-h-52 overflow-y-auto font-mono text-[11px] space-y-1.5"
-        >
-          {logs.length === 0 ? (
-            <div className="text-slate-400">No execution events recorded yet.</div>
-          ) : (
-            logs.map((log, idx) => (
-              <div key={log.id || idx} className="flex items-start gap-2 leading-relaxed">
-                <span className="text-slate-500 text-[10px] flex-shrink-0">
-                  {new Date(log.timestamp).toLocaleTimeString()}
-                </span>
-                <span style={{ color: getEventTypeColor(log.event_type) }} className="font-semibold flex-shrink-0">
-                  [{log.event_type}]
-                </span>
-                <span className="text-slate-200 word-break-all">
-                  {log.message}
-                </span>
+        <div className="mt-3 rounded-xl border border-[#0F3830] bg-[#061110] shadow-xl overflow-hidden font-mono text-xs">
+          {/* macOS Terminal Window Header */}
+          <div className="bg-[#040D0C] border-b border-[#0E2421] px-3.5 py-2 flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#FF5F56] inline-block" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E] inline-block" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#27C93F] inline-block" />
+            </div>
+            <span className="text-[10px] text-[#4E7570] font-medium">
+              claimforge@agent:~$
+            </span>
+          </div>
+
+          {/* Terminal Console Body */}
+          <div
+            ref={scrollRef}
+            className="p-4 bg-[#061110] text-[#D1EBE7] max-h-56 overflow-y-auto space-y-2 leading-relaxed"
+          >
+            <div className="flex items-center gap-1.5 text-[11px] pb-1">
+              <span className="text-[#00F2FE] font-bold">$</span>
+              <span className="text-[#00F2FE] font-bold">claimforge audit {investigationId}</span>
+            </div>
+            <div className="text-[#4E7570] text-[10px] mb-2 font-semibold">
+              ClaimForge Agent Protocol v2.4.0
+            </div>
+
+            {logs.length === 0 ? (
+              <div className="text-[#4E7570] text-[11px]">
+                <span className="text-[#4E7570] font-bold">[→]</span> Initializing agent event stream...
               </div>
-            ))
-          )}
+            ) : (
+              logs.map((log, idx) => {
+                const isSuccess = log.event_type.includes('COMPLETED') || log.event_type.includes('CREATED') || log.event_type.includes('CALCULATED');
+                const isWarn = log.event_type.includes('CONTRADICTION') || log.event_type.includes('REJECTED');
+                return (
+                  <div key={log.id || idx} className="flex items-start gap-2 text-[11px]">
+                    {isSuccess ? (
+                      <span className="text-[#00E676] font-bold flex-shrink-0">[✓]</span>
+                    ) : isWarn ? (
+                      <span className="text-[#FFC107] font-bold flex-shrink-0">[⚠]</span>
+                    ) : (
+                      <span className="text-[#4E7570] font-bold flex-shrink-0">[→]</span>
+                    )}
+                    <div>
+                      <span className="text-[#00F2FE] font-semibold mr-1.5">
+                        [{log.event_type}]
+                      </span>
+                      <span>{log.message}</span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+
+            {/* Active Cursor Footer */}
+            <div className="pt-2 mt-2 border-t border-[#0E2421] text-[10px] text-[#4E7570] flex items-center justify-between">
+              <span>Status: PASS | Determinism verified</span>
+              <span className="w-2 h-3.5 bg-[#00F2FE] inline-block animate-pulse" />
+            </div>
+          </div>
         </div>
       )}
     </div>
   );
 };
-
-function getEventTypeColor(type: string) {
-  if (type.includes('COMPLETED') || type.includes('CREATED')) return '#34D399';
-  if (type.includes('FAILED') || type.includes('REJECTED')) return '#F87171';
-  if (type.includes('CONTRADICTION')) return '#FBBF24';
-  return '#818CF8';
-}

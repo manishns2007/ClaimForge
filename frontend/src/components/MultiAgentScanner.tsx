@@ -3,7 +3,6 @@ import {
   Bot, 
   FileText, 
   Cpu, 
-  Terminal, 
   RefreshCw, 
   Sparkles, 
   Play, 
@@ -23,9 +22,17 @@ interface AgentState {
   itemsProcessed: number;
 }
 
+interface LogEntry {
+  timestamp: string;
+  agent: string;
+  statusType: 'progress' | 'success' | 'warn';
+  tag: string;
+  formattedMessage: React.ReactNode;
+}
+
 export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => void }> = ({ onOpenWorkspace }) => {
   const [isScanning, setIsScanning] = useState<boolean>(true);
-  const [logs, setLogs] = useState<Array<{ timestamp: string; agent: string; type: string; message: string; level: 'info' | 'warn' | 'success' }>>([]);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [agents, setAgents] = useState<AgentState[]>([
     {
       id: 'agent-1',
@@ -65,57 +72,132 @@ export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => voi
     }
   ]);
 
-  // Simulated real-time log streaming
+  // Initial terminal state resembling NexOps/ClaimForge CLI execution
+  const initialLogs: LogEntry[] = [
+    {
+      timestamp: '09:14:01',
+      agent: 'Ingestion Agent',
+      statusType: 'progress',
+      tag: 'PARSE',
+      formattedMessage: <>Parsing intent specification <span className="text-[#4E7570]">...</span></>
+    },
+    {
+      timestamp: '09:14:02',
+      agent: 'Ingestion Agent',
+      statusType: 'success',
+      tag: 'VALIDATED',
+      formattedMessage: <>Intent validated <span className="text-[#4E7570]">|</span> name=Escrow_SLA <span className="text-[#4E7570]">|</span> version=1.0</>
+    },
+    {
+      timestamp: '09:14:03',
+      agent: 'Reasoning Agent',
+      statusType: 'progress',
+      tag: 'TELEMETRY',
+      formattedMessage: <>Generating ClaimIR intermediate representation <span className="text-[#4E7570]">...</span></>
+    },
+    {
+      timestamp: '09:14:04',
+      agent: 'Reasoning Agent',
+      statusType: 'success',
+      tag: 'IR_GEN',
+      formattedMessage: <>ClaimIR generated <span className="text-[#4E7570]">|</span> ops=47 <span className="text-[#4E7570]">|</span> size=2.3KB</>
+    },
+    {
+      timestamp: '09:14:05',
+      agent: 'Contradiction Hunter',
+      statusType: 'progress',
+      tag: 'ANALYSIS',
+      formattedMessage: <>Running TollGate security & contradiction analysis <span className="text-[#4E7570]">...</span></>
+    },
+    {
+      timestamp: '09:14:06',
+      agent: 'Contradiction Hunter',
+      statusType: 'success',
+      tag: 'ANALYSIS_PASS',
+      formattedMessage: <>Logic flaws: <span className="text-[#00E676]">PASS</span> <span className="text-[#4E7570]">|</span> Signatures: <span className="text-[#00E676]">PASS</span></>
+    },
+    {
+      timestamp: '09:14:07',
+      agent: 'Scoring Engine',
+      statusType: 'success',
+      tag: 'DETERMINISM',
+      formattedMessage: <>Determinism verified <span className="text-[#4E7570]">|</span> Reproducible: <span className="text-[#00E676]">YES</span> <span className="text-[#4E7570]">|</span> Recovery=$125,000.00</>
+    }
+  ];
+
+  useEffect(() => {
+    setLogs(initialLogs);
+  }, []);
+
+  // Real-time log streaming simulation
   useEffect(() => {
     if (!isScanning) return;
 
-    const sampleLogs = [
-      { agent: 'Ingestion Agent', type: 'DOC_PARSED', message: 'Extracted Clause 14.2 (SLA Credit Threshold: 99.9% uptime requirement)', level: 'info' as const },
-      { agent: 'Reasoning Agent', type: 'TELEMETRY_MATCH', message: 'Detected 4hr 12min downtime during peak window Oct 24 14:00-18:12 UTC', level: 'info' as const },
-      { agent: 'Contradiction Hunter', type: 'OVERRIDE_FLAG', message: 'Vendor billed full rate ($125,000) despite 4.2h outage. Discrepancy confirmed.', level: 'warn' as const },
-      { agent: 'Scoring Engine', type: 'RECOVERY_CALCULATED', message: 'Calculated recoverable dispute exposure: $125,000.00 (Confidence: 94%)', level: 'success' as const },
-      { agent: 'Ingestion Agent', type: 'EMAIL_ANALYZED', message: 'Parsed email thread "Re: Service disruption update" from vendor account manager', level: 'info' as const },
-      { agent: 'Reasoning Agent', type: 'CLAUSE_VERIFIED', message: 'Penalty clause $5,000/hr outage triggered. Total claim value updated to $146,000', level: 'success' as const }
+    const sampleStream: LogEntry[] = [
+      {
+        timestamp: '',
+        agent: 'Ingestion Agent',
+        statusType: 'progress',
+        tag: 'INGEST',
+        formattedMessage: <>Parsing Clause 14.2 SLA uptime cutoff specification <span className="text-[#4E7570]">...</span></>
+      },
+      {
+        timestamp: '',
+        agent: 'Reasoning Agent',
+        statusType: 'success',
+        tag: 'MATCHED',
+        formattedMessage: <>Telemetry verified <span className="text-[#4E7570]">|</span> Outage=4h12m <span className="text-[#4E7570]">|</span> PeakWindow=OCT24</>
+      },
+      {
+        timestamp: '',
+        agent: 'Contradiction Hunter',
+        statusType: 'warn',
+        tag: 'DISCREPANCY',
+        formattedMessage: <>Vendor billed full rate ($125,000) <span className="text-[#4E7570]">|</span> Hard_Overrides=NONE <span className="text-[#4E7570]">|</span> Flag=PASS</>
+      },
+      {
+        timestamp: '',
+        agent: 'Scoring Engine',
+        statusType: 'success',
+        tag: 'RECOVERY',
+        formattedMessage: <>Calculated exposure <span className="text-[#4E7570]">|</span> Value=$125,000.00 <span className="text-[#4E7570]">|</span> Confidence=94%</>
+      }
     ];
 
-    let logIndex = 0;
+    let index = 0;
     const interval = setInterval(() => {
-      const log = sampleLogs[logIndex % sampleLogs.length];
+      const item = sampleStream[index % sampleStream.length];
       const now = new Date().toLocaleTimeString();
-      
-      setLogs((prev) => [
-        {
-          timestamp: now,
-          agent: log.agent,
-          type: log.type,
-          message: log.message,
-          level: log.level
-        },
-        ...prev.slice(0, 19)
-      ]);
 
-      // Update progress
+      setLogs((prev) => [
+        ...prev,
+        {
+          ...item,
+          timestamp: now
+        }
+      ].slice(-15));
+
       setAgents((prev) => prev.map((a) => {
         if (a.status === 'running') {
-          const nextProg = Math.min(100, a.progress + Math.floor(Math.random() * 5) + 1);
+          const nextProg = Math.min(100, a.progress + Math.floor(Math.random() * 4) + 1);
           return {
             ...a,
             progress: nextProg,
-            itemsProcessed: a.itemsProcessed + Math.floor(Math.random() * 3) + 1,
+            itemsProcessed: a.itemsProcessed + Math.floor(Math.random() * 2) + 1,
             status: nextProg >= 100 ? 'completed' : 'running'
           };
         }
         return a;
       }));
 
-      logIndex++;
-    }, 1800);
+      index++;
+    }, 2000);
 
     return () => clearInterval(interval);
   }, [isScanning]);
 
   const handleRestartScan = () => {
-    setLogs([]);
+    setLogs(initialLogs);
     setAgents([
       { id: 'agent-1', name: 'Document Ingestion Agent', role: 'Parses PDF contracts, CSV logs & EML emails', status: 'running', progress: 15, currentDocument: 'Master_Service_Agreement_v4.pdf', itemsProcessed: 20 },
       { id: 'agent-2', name: 'Event Reasoning Agent', role: 'Correlates outage telemetry with SLA terms', status: 'running', progress: 10, currentDocument: 'Telemetry_Outage_Oct24.csv', itemsProcessed: 110 },
@@ -126,20 +208,20 @@ export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => voi
   };
 
   return (
-    <div className="bg-background border border-border rounded-xl p-5 shadow-lg font-body my-6">
+    <div className="bg-white border border-[#E5E5E2] rounded-2xl p-5 shadow-xs font-body my-6">
       {/* Control Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 mb-5 border-b border-border/60">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 mb-5 border-b border-[#E5E5E2]">
         <div>
           <div className="flex items-center gap-2">
-            <Cpu className="w-5 h-5 text-accent animate-pulse" />
-            <h2 className="text-base font-bold text-foreground tracking-tight">
+            <Cpu className="w-5 h-5 text-[#6C63E6] animate-pulse" />
+            <h2 className="text-base font-bold text-[#20242A] tracking-tight">
               Autonomous ClaimForge Multi-Agent Pipeline
             </h2>
-            <span className="bg-accent/15 text-accent text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+            <span className="bg-[#6C63E6]/10 text-[#6C63E6] border border-[#6C63E6]/25 text-[10px] font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1">
               <Sparkles className="w-3 h-3" /> 4 Agents Active
             </span>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-[#737A80] mt-0.5">
             Real-time evidence ingestion, SLA telemetry reasoning, and financial dispute calculation.
           </p>
         </div>
@@ -147,14 +229,14 @@ export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => voi
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsScanning(!isScanning)}
-            className="bg-secondary hover:bg-secondary/80 text-foreground border border-border rounded-lg px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors"
+            className="btn-secondary text-xs py-1.5 px-3 rounded-full flex items-center gap-1.5"
           >
-            {isScanning ? <Pause className="w-3.5 h-3.5 text-amber-500" /> : <Play className="w-3.5 h-3.5 text-emerald-500" />}
+            {isScanning ? <Pause className="w-3.5 h-3.5 text-amber-600" /> : <Play className="w-3.5 h-3.5 text-emerald-600" />}
             <span>{isScanning ? 'Pause Pipeline' : 'Resume Pipeline'}</span>
           </button>
           <button
             onClick={handleRestartScan}
-            className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-lg px-3 py-1.5 text-xs font-medium flex items-center gap-1.5 transition-colors"
+            className="btn-primary text-xs py-1.5 px-4 rounded-full flex items-center gap-1.5"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Re-run Agent Scan</span>
@@ -167,46 +249,46 @@ export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => voi
         {agents.map((agent) => (
           <div 
             key={agent.id}
-            className="bg-secondary/40 border border-border/60 rounded-xl p-3.5 flex flex-col justify-between"
+            className="bg-[#F7F7F5] border border-[#E5E5E2] rounded-xl p-3.5 flex flex-col justify-between"
           >
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <Bot className="w-3.5 h-3.5 text-accent" />
+                <span className="text-xs font-semibold text-[#20242A] flex items-center gap-1.5">
+                  <Bot className="w-3.5 h-3.5 text-[#6C63E6]" />
                   {agent.name}
                 </span>
                 <span className={`text-[9px] font-semibold px-2 py-0.5 rounded-full uppercase ${
                   agent.status === 'completed' 
-                    ? 'bg-emerald-500/15 text-emerald-600'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                     : agent.status === 'flagged'
-                    ? 'bg-amber-500/15 text-amber-600'
-                    : 'bg-accent/15 text-accent animate-pulse'
+                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                    : 'bg-[#6C63E6]/10 text-[#6C63E6] border border-[#6C63E6]/25 animate-pulse'
                 }`}>
                   {agent.status}
                 </span>
               </div>
-              <p className="text-[10px] text-muted-foreground line-clamp-1">{agent.role}</p>
+              <p className="text-[10px] text-[#737A80] truncate">{agent.role}</p>
             </div>
 
             <div className="mt-3">
-              <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+              <div className="flex items-center justify-between text-[10px] text-[#737A80] mb-1">
                 <span className="truncate max-w-[130px]" title={agent.currentDocument}>
                   📄 {agent.currentDocument}
                 </span>
-                <span className="font-mono font-semibold">{agent.progress}%</span>
+                <span className="font-mono font-semibold text-[#20242A]">{agent.progress}%</span>
               </div>
               
               {/* Progress Bar */}
-              <div className="w-full bg-secondary h-1.5 rounded-full overflow-hidden">
+              <div className="w-full bg-[#E5E5E2] h-1.5 rounded-full overflow-hidden">
                 <div 
                   className={`h-full transition-all duration-500 ${
-                    agent.status === 'flagged' ? 'bg-amber-500' : 'bg-accent'
+                    agent.status === 'flagged' ? 'bg-amber-500' : 'bg-[#6C63E6]'
                   }`} 
                   style={{ width: `${agent.progress}%` }} 
                 />
               </div>
               
-              <div className="text-[9px] text-muted-foreground mt-1 flex items-center justify-between">
+              <div className="text-[9px] text-[#737A80] mt-1 flex items-center justify-between">
                 <span>Processed: {agent.itemsProcessed} records</span>
                 <span>{agent.progress === 100 ? 'Done' : 'Scanning...'}</span>
               </div>
@@ -217,63 +299,78 @@ export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => voi
 
       {/* Active Evidence Document Badges */}
       <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1 text-[11px]">
-        <span className="text-muted-foreground font-semibold text-[10px] uppercase tracking-wider flex-shrink-0">
+        <span className="text-[#737A80] font-semibold text-[10px] uppercase tracking-wider flex-shrink-0">
           Ingested Evidence Files:
         </span>
-        <span className="bg-background border border-border rounded-md px-2.5 py-1 text-foreground flex items-center gap-1.5 flex-shrink-0">
-          <FileText className="w-3 h-3 text-red-500" /> Contract_SLA_2024.pdf (Clause 14.2)
+        <span className="bg-[#F7F7F5] border border-[#E5E5E2] rounded-full px-3 py-1 text-[#20242A] flex items-center gap-1.5 flex-shrink-0 text-xs">
+          <FileText className="w-3.5 h-3.5 text-rose-500" /> Contract_SLA_2024.pdf (Clause 14.2)
         </span>
-        <span className="bg-background border border-border rounded-md px-2.5 py-1 text-foreground flex items-center gap-1.5 flex-shrink-0">
-          <FileSpreadsheet className="w-3 h-3 text-emerald-500" /> Telemetry_Outage_Logs.csv (890 rows)
+        <span className="bg-[#F7F7F5] border border-[#E5E5E2] rounded-full px-3 py-1 text-[#20242A] flex items-center gap-1.5 flex-shrink-0 text-xs">
+          <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" /> Telemetry_Outage_Logs.csv (890 rows)
         </span>
-        <span className="bg-background border border-border rounded-md px-2.5 py-1 text-foreground flex items-center gap-1.5 flex-shrink-0">
-          <Mail className="w-3 h-3 text-blue-500" /> Vendor_Discrepancy_Thread.eml (3 attachments)
+        <span className="bg-[#F7F7F5] border border-[#E5E5E2] rounded-full px-3 py-1 text-[#20242A] flex items-center gap-1.5 flex-shrink-0 text-xs">
+          <Mail className="w-3.5 h-3.5 text-amber-500" /> Vendor_Discrepancy_Thread.eml (3 attachments)
         </span>
       </div>
 
-      {/* Real-time Streaming Logs Console */}
-      <div className="bg-[#090D16] border border-border rounded-xl p-3">
-        <div className="flex items-center justify-between pb-2 mb-2 border-b border-border/40 text-xs">
+      {/* 5. CUSTOM TERMINAL LOG WINDOW MATCHING SCREENSHOT */}
+      <div className="rounded-xl border border-[#0F3830] bg-[#061110] shadow-2xl overflow-hidden font-mono text-xs">
+        {/* macOS Terminal Window Header Bar */}
+        <div className="bg-[#040D0C] border-b border-[#0E2421] px-4 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Terminal className="w-4 h-4 text-accent" />
-            <span className="font-semibold text-white">Live Execution Logs</span>
-            {isScanning && (
-              <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono">
-                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" /> STREAMING ACTIVE
-              </span>
-            )}
+            <span className="w-3 h-3 rounded-full bg-[#FF5F56] inline-block" />
+            <span className="w-3 h-3 rounded-full bg-[#FFBD2E] inline-block" />
+            <span className="w-3 h-3 rounded-full bg-[#27C93F] inline-block" />
           </div>
-          <span className="text-[10px] text-slate-400 font-mono">{logs.length} events logged</span>
+          <span className="text-[11px] text-[#4E7570] font-medium tracking-wide">
+            claimforge@protocol:~$
+          </span>
         </div>
 
-        <div className="max-h-48 overflow-y-auto space-y-1.5 font-mono text-[11px] pr-2">
-          {logs.length === 0 ? (
-            <div className="text-slate-500 py-3 text-center">Initializing agent stream...</div>
-          ) : (
-            logs.map((log, idx) => (
-              <div key={idx} className="flex items-start gap-2.5 leading-relaxed">
-                <span className="text-slate-500 text-[10px] flex-shrink-0">{log.timestamp}</span>
-                <span className="text-accent font-semibold flex-shrink-0">[{log.agent}]</span>
-                <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold flex-shrink-0 ${
-                  log.level === 'warn' 
-                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                    : log.level === 'success'
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                    : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                }`}>
-                  {log.type}
-                </span>
-                <span className="text-slate-200 word-break-all">{log.message}</span>
+        {/* Inner Terminal Execution Log Body */}
+        <div className="p-5 bg-[#061110] text-[#D1EBE7] space-y-2.5 max-h-72 overflow-y-auto leading-relaxed">
+          {/* Command prompt header line */}
+          <div className="flex items-center gap-2 text-xs pb-1">
+            <span className="text-[#00F2FE] font-bold">$</span>
+            <span className="text-[#00F2FE] font-bold">claimforge compile audit.intent --network mainnet</span>
+          </div>
+          <div className="text-[#4E7570] text-[11px] font-semibold mb-3">
+            ClaimForge Protocol v2.4.0
+          </div>
+
+          {/* Terminal log entries */}
+          {logs.map((log, idx) => (
+            <div key={idx} className="flex items-start gap-2.5">
+              {log.statusType === 'progress' && (
+                <span className="text-[#4E7570] font-bold flex-shrink-0">[→]</span>
+              )}
+              {log.statusType === 'success' && (
+                <span className="text-[#00E676] font-bold flex-shrink-0">[✓]</span>
+              )}
+              {log.statusType === 'warn' && (
+                <span className="text-[#FFC107] font-bold flex-shrink-0">[⚠]</span>
+              )}
+              <div className="text-[#D1EBE7]">
+                {log.formattedMessage}
               </div>
-            ))
-          )}
+            </div>
+          ))}
+
+          {/* Deployment Package Footer & Active Cursor */}
+          <div className="pt-3 mt-2 border-t border-[#0E2421] space-y-1">
+            <div className="text-[#D1EBE7] font-bold">Deployment Package:</div>
+            <div className="text-[#4E7570] flex items-center gap-1">
+              <span>Contract: Escrow (0x7a4c...5a)</span>
+              <span className="w-2 h-4 bg-[#00F2FE] inline-block animate-pulse ml-1" />
+            </div>
+          </div>
         </div>
 
         {onOpenWorkspace && (
-          <div className="pt-3 mt-2 border-t border-border/40 flex justify-end">
+          <div className="bg-[#040D0C] border-t border-[#0E2421] p-3 flex justify-end">
             <button
               onClick={() => onOpenWorkspace('inv-101')}
-              className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-lg px-3.5 py-1.5 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="bg-[#00F2FE] text-[#040D0C] hover:bg-[#00F2FE]/90 rounded-lg px-4 py-1.5 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer border-none"
             >
               Inspect High-Recovery Claim Case ($125,000.00) <ArrowRight className="w-3.5 h-3.5" />
             </button>
