@@ -11,7 +11,7 @@ import type { Investigation } from '../types/api';
 
 interface NavbarProps {
   currentView: 'dashboard' | 'investigation';
-  onNavigate: (view: 'dashboard' | 'investigation', investigationId?: string) => void;
+  onNavigate: (view: 'hero' | 'dashboard' | 'investigation', investigationId?: string) => void;
   investigations: Investigation[];
   selectedInvestigationId?: string;
   onOpenUploadModal: () => void;
@@ -33,8 +33,9 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Brand & Subtitle */}
       <div className="flex items-center gap-6">
         <button
-          onClick={() => onNavigate('dashboard')}
+          onClick={() => onNavigate('hero')}
           className="flex items-center gap-2 text-left group border-none bg-transparent cursor-pointer"
+          title="Return to ClaimForge Home"
         >
           <span className="text-xl font-semibold tracking-tight text-[#20242A]">
             ✦ ClaimForge

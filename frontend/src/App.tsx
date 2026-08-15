@@ -6,7 +6,6 @@ import { NewInvestigationModal } from './components/NewInvestigationModal';
 import { Navbar as AppNavbar } from './components/Navbar';
 import { fetchDashboardStats, fetchInvestigations } from './services/api';
 import type { DashboardStats, Investigation } from './types/api';
-import { ArrowLeft, Bot } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [activeView, setActiveView] = useState<'hero' | 'dashboard' | 'investigation'>('hero');
@@ -40,7 +39,7 @@ export const App: React.FC = () => {
     loadData();
   }, []);
 
-  const handleNavigate = (view: 'dashboard' | 'investigation', invId?: string) => {
+  const handleNavigate = (view: 'hero' | 'dashboard' | 'investigation', invId?: string) => {
     setActiveView(view);
     if (invId) {
       setSelectedInvestigationId(invId);
@@ -70,7 +69,7 @@ export const App: React.FC = () => {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#090D16' }}>
+    <div className="min-h-screen bg-[#F7F7F5] text-[#20242A]">
       {/* Top Header Navbar */}
       <AppNavbar
         currentView={activeView === 'investigation' ? 'investigation' : 'dashboard'}
@@ -82,21 +81,8 @@ export const App: React.FC = () => {
         isSeeding={isSeeding}
       />
 
-      {/* Floating Back to Landing Page Header Banner */}
-      <div style={{ background: '#0F172A', borderBottom: '1px solid #1E293B', padding: '8px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <button
-          onClick={() => setActiveView('hero')}
-          style={{ background: 'transparent', border: 'none', color: '#38BDF8', cursor: 'pointer', fontSize: '12px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}
-        >
-          <ArrowLeft size={14} /> Return to SaaS Landing Page
-        </button>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#10B981', fontWeight: '600' }}>
-          <Bot size={14} /> Autonomous AI Pipeline Active — Real-Time SSE Log Stream Enabled
-        </div>
-      </div>
-
       {/* Main Content Area */}
-      <main>
+      <main className="w-full bg-[#F7F7F5]">
         {activeView === 'dashboard' ? (
           <ExecutiveDashboard
             stats={stats}
@@ -110,7 +96,7 @@ export const App: React.FC = () => {
             onBackToDashboard={() => setActiveView('dashboard')}
           />
         ) : (
-          <div style={{ padding: '60px', textAlign: 'center', color: '#94A3B8' }}>
+          <div className="py-20 text-center text-[#737A80] font-body">
             No investigation selected. Click Executive Overview to view portfolio.
           </div>
         )}
