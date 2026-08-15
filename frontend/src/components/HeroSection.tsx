@@ -9,14 +9,14 @@ import {
   Plus, 
   MoreVertical, 
   LayoutDashboard, 
-  CheckSquare, 
-  ArrowUpRight, 
-  CreditCard, 
-  Building2, 
-  Layers, 
+  FolderGit2, 
   FileText, 
+  ShieldCheck, 
+  Scale, 
+  BarChart3, 
+  FileSpreadsheet, 
   SlidersHorizontal,
-  FolderGit2
+  UploadCloud
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -28,7 +28,7 @@ export const HeroSection: React.FC = () => {
         {/* Left: Logo */}
         <div className="flex items-center gap-2">
           <span className="text-xl font-semibold tracking-tight text-foreground">
-            ✦ Nexora
+            ✦ ClaimForge
           </span>
         </div>
 
@@ -90,7 +90,7 @@ export const HeroSection: React.FC = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mt-4 text-center text-base md:text-lg text-muted-foreground max-w-[650px] leading-relaxed font-body"
           >
-            Automate your busywork with intelligent agents that learn, adapt, and execute—so your team can focus on what matters most.
+            Discover financially recoverable commercial claims from contracts, invoices, and telemetry with intelligent agents that learn, adapt, and execute.
           </motion.p>
 
           {/* 4. CTA Buttons */}
@@ -112,7 +112,7 @@ export const HeroSection: React.FC = () => {
             </Button>
           </motion.div>
 
-          {/* 5. Dashboard Preview (Custom Coded React UI) */}
+          {/* 5. Dashboard Preview (Custom Coded React UI for ClaimForge) */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -135,17 +135,17 @@ export const HeroSection: React.FC = () => {
                   {/* Left: Brand */}
                   <div className="flex items-center gap-2">
                     <div className="w-5 h-5 rounded bg-primary text-primary-foreground flex items-center justify-center font-bold text-[10px]">
-                      N
+                      CF
                     </div>
-                    <span className="font-semibold text-foreground">Nexora</span>
+                    <span className="font-semibold text-foreground">ClaimForge</span>
                     <ChevronDown className="w-3 h-3 text-muted-foreground ml-0.5" />
                   </div>
 
                   {/* Center: Search Bar */}
-                  <div className="flex items-center gap-2 bg-secondary/80 px-3 py-1 rounded-lg text-muted-foreground w-52 justify-between border border-border/50">
+                  <div className="flex items-center gap-2 bg-secondary/80 px-3 py-1 rounded-lg text-muted-foreground w-56 justify-between border border-border/50">
                     <div className="flex items-center gap-1.5">
                       <Search className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span className="text-[10px]">Search...</span>
+                      <span className="text-[10px]">Search claims & evidence...</span>
                     </div>
                     <kbd className="text-[9px] bg-background px-1.5 py-0.5 rounded border border-border font-sans">
                       ⌘K
@@ -154,8 +154,9 @@ export const HeroSection: React.FC = () => {
 
                   {/* Right: Actions */}
                   <div className="flex items-center gap-3">
-                    <button className="bg-accent text-accent-foreground rounded-md px-2.5 py-1 font-medium text-[10px] shadow-sm">
-                      Move Money
+                    <button className="bg-accent text-accent-foreground rounded-md px-2.5 py-1 font-medium text-[10px] shadow-sm flex items-center gap-1">
+                      <UploadCloud className="w-3 h-3" />
+                      Upload Evidence
                     </button>
                     <Bell className="w-3.5 h-3.5 text-muted-foreground" />
                     <div className="w-6 h-6 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[10px] font-semibold border border-slate-300">
@@ -179,8 +180,8 @@ export const HeroSection: React.FC = () => {
 
                       <div className="text-muted-foreground px-2.5 py-1.5 flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <CheckSquare className="w-3.5 h-3.5" />
-                          <span>Tasks</span>
+                          <FolderGit2 className="w-3.5 h-3.5" />
+                          <span>Investigations</span>
                         </div>
                         <span className="bg-accent/15 text-accent font-semibold px-1.5 py-0.2 rounded-full text-[9px]">
                           10
@@ -188,32 +189,32 @@ export const HeroSection: React.FC = () => {
                       </div>
 
                       <div className="text-muted-foreground px-2.5 py-1.5 flex items-center gap-2">
-                        <ArrowUpRight className="w-3.5 h-3.5" />
-                        <span>Transactions</span>
-                      </div>
-
-                      <div className="text-muted-foreground px-2.5 py-1.5 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <CreditCard className="w-3.5 h-3.5" />
-                          <span>Payments</span>
-                        </div>
-                        <ChevronDown className="w-3 h-3 text-muted-foreground" />
-                      </div>
-
-                      <div className="text-muted-foreground px-2.5 py-1.5 flex items-center gap-2">
-                        <Layers className="w-3.5 h-3.5" />
-                        <span>Cards</span>
-                      </div>
-
-                      <div className="text-muted-foreground px-2.5 py-1.5 flex items-center gap-2">
-                        <Building2 className="w-3.5 h-3.5" />
-                        <span>Capital</span>
+                        <Scale className="w-3.5 h-3.5" />
+                        <span>Discovered Claims</span>
                       </div>
 
                       <div className="text-muted-foreground px-2.5 py-1.5 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <FileText className="w-3.5 h-3.5" />
-                          <span>Accounts</span>
+                          <span>Evidence Vault</span>
+                        </div>
+                        <ChevronDown className="w-3 h-3 text-muted-foreground" />
+                      </div>
+
+                      <div className="text-muted-foreground px-2.5 py-1.5 flex items-center gap-2">
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        <span>Audit Trail</span>
+                      </div>
+
+                      <div className="text-muted-foreground px-2.5 py-1.5 flex items-center gap-2">
+                        <BarChart3 className="w-3.5 h-3.5" />
+                        <span>Intelligence</span>
+                      </div>
+
+                      <div className="text-muted-foreground px-2.5 py-1.5 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <FileSpreadsheet className="w-3.5 h-3.5" />
+                          <span>Portfolios</span>
                         </div>
                         <ChevronDown className="w-3 h-3 text-muted-foreground" />
                       </div>
@@ -228,7 +229,7 @@ export const HeroSection: React.FC = () => {
                           <span>Trake rutes</span>
                         </div>
                         <div className="text-muted-foreground px-2.5 py-1 flex items-center gap-2">
-                          <CreditCard className="w-3 h-3" />
+                          <Scale className="w-3 h-3" />
                           <span>Payments</span>
                         </div>
                         <div className="text-muted-foreground px-2.5 py-1 flex items-center gap-2">
@@ -281,7 +282,7 @@ export const HeroSection: React.FC = () => {
                     {/* Cards Grid: Balance Card + Accounts Card */}
                     <div className="grid grid-cols-2 gap-3">
                       
-                      {/* Balance Card */}
+                      {/* Balance Card (Recoverable Claim Exposure) */}
                       <div className="bg-background rounded-xl p-3 border border-border/60 shadow-sm flex flex-col justify-between">
                         <div>
                           <div className="flex items-center justify-between text-muted-foreground mb-1">
@@ -297,7 +298,7 @@ export const HeroSection: React.FC = () => {
                         <div className="my-2 relative h-16 w-full overflow-hidden">
                           <svg className="w-full h-full" viewBox="0 0 400 70" preserveAspectRatio="none">
                             <defs>
-                              <linearGradient id="accentGradient" x1="0" y1="0" x2="0" y2="1">
+                              <linearGradient id="claimGradient" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="0%" stopColor="hsl(239, 84%, 67%)" stopOpacity="0.15" />
                                 <stop offset="100%" stopColor="hsl(239, 84%, 67%)" stopOpacity="0" />
                               </linearGradient>
@@ -305,7 +306,7 @@ export const HeroSection: React.FC = () => {
                             {/* Smooth cubic Bézier area path */}
                             <path
                               d="M 0,45 C 60,40 100,10 150,25 C 200,40 240,15 300,30 C 340,40 370,10 400,20 L 400,70 L 0,70 Z"
-                              fill="url(#accentGradient)"
+                              fill="url(#claimGradient)"
                             />
                             {/* Smooth cubic Bézier line stroke */}
                             <path
@@ -327,7 +328,7 @@ export const HeroSection: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Accounts Card */}
+                      {/* Accounts / Portfolio Card */}
                       <div className="bg-background rounded-xl p-3 border border-border/60 shadow-sm flex flex-col justify-between">
                         <div className="flex items-center justify-between mb-1">
                           <span className="text-[11px] font-semibold text-foreground">Accounts</span>
@@ -363,8 +364,8 @@ export const HeroSection: React.FC = () => {
                       
                       <div className="w-full text-left border-collapse text-[10px]">
                         <div className="grid grid-cols-4 pb-1.5 text-muted-foreground font-medium border-b border-border/40 uppercase tracking-wider text-[9px]">
-                          <div>Date/Desc</div>
-                          <div>Type</div>
+                          <div>Date/Description</div>
+                          <div>Category</div>
                           <div>Amount</div>
                           <div className="text-right">Status</div>
                         </div>
