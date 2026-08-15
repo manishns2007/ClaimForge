@@ -9,11 +9,16 @@ from backend.app.core.logging import logger
 from backend.app.db.models import Investigation, Document, DocumentChunk
 from backend.app.services.event_service import EventService
 from backend.app.services.evidence_service import EvidenceService
+from backend.app.services.vision_ocr import VisionOCRService
 from backend.app.parsers.pdf_parser import parse_pdf
 from backend.app.parsers.csv_parser import parse_csv
 from backend.app.parsers.email_parser import parse_eml
 
-ALLOWED_EXTENSIONS = {".pdf", ".csv", ".eml", ".txt"}
+ALLOWED_EXTENSIONS = {
+    ".pdf", ".csv", ".eml", ".txt",
+    ".png", ".jpg", ".jpeg", ".tiff", ".tif", ".webp"
+}
+IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tiff", ".tif", ".webp"}
 
 class DocumentIngestionService:
     @staticmethod
@@ -55,7 +60,7 @@ class DocumentIngestionService:
                 )
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Unsupported file extension '{file_ext}'. Allowed: {', '.join(ALLOWED_EXTENSIONS)}"
+                    detail=f"Unsupported file extension '{file_ext}'. Allowed: {', '.join(sorted(ALLOWED_EXTENSIONS))}"
                 )
 
             storage_path = inv_storage_dir / filename
@@ -65,10 +70,12 @@ class DocumentIngestionService:
             with open(storage_path, "wb") as f:
                 f.write(content)
 
+            file_type_label = "IMAGE" if file_ext in IMAGE_EXTENSIONS else file_ext.lstrip(".").upper()
+
             doc = Document(
                 investigation_id=investigation_id,
                 filename=filename,
-                file_type=file_ext.lstrip(".").upper(),
+                file_type=file_type_label,
                 file_size=file_size,
                 storage_path=str(storage_path),
                 status="UPLOADED"
@@ -86,7 +93,7 @@ class DocumentIngestionService:
                 {"document_id": doc.id, "filename": filename, "size": file_size}
             )
 
-            # Instantly parse deterministic document content
+            # Instantly parse document content
             DocumentIngestionService.parse_document(db, doc)
 
         # Check investigation parsing completion status
@@ -126,6 +133,59 @@ class DocumentIngestionService:
             result = parse_csv(file_path)
         elif file_ext in [".eml", ".txt"]:
             result = parse_eml(file_path)
+        elif file_ext in IMAGE_EXTENSIONS:
+            # Standalone image ingestion using VisionOCRService
+            ocr_res = VisionOCRService.transcribe_image_file(file_path)
+            if ocr_res.get("success") and ocr_res.get("text"):
+                result = {
+                    "success": True,
+                    "metadata": {
+                        "format": file_ext.lstrip(".").upper(),
+                        "extraction_method": ocr_res.get("method", "GEMINI_FLASH_VISION"),
+                        "ocr_applied": True
+                    },
+                    "chunks": [
+                        {
+                            "chunk_index": 0,
+                            "page_number": 1,
+                            "content": ocr_res["text"],
+                            "metadata_json": {
+                                "filename": doc.filename,
+                                "page_number": 1,
+                                "char_start": 0,
+                                "char_end": len(ocr_res["text"]),
+                                "ocr_applied": True,
+                                "extraction_method": ocr_res.get("method", "GEMINI_FLASH_VISION")
+                            }
+                        }
+                    ],
+                    "error": None
+                }
+            else:
+                result = {
+                    "success": True,
+                    "metadata": {
+                        "format": file_ext.lstrip(".").upper(),
+                        "extraction_method": "IMAGE_UNPROCESSED_OFFLINE",
+                        "ocr_applied": False
+                    },
+                    "chunks": [
+                        {
+                            "chunk_index": 0,
+                            "page_number": 1,
+                            "content": f"[IMAGE_DOCUMENT: {doc.filename} - OCR pending / offline]",
+                            "metadata_json": {
+                                "filename": doc.filename,
+                                "page_number": 1,
+                                "char_start": 0,
+                                "char_end": 0,
+                                "ocr_applied": False,
+                                "extraction_method": "OFFLINE_PLACEHOLDER"
+                            }
+                        }
+                    ],
+                    "error": None
+                }
         else:
             result = {"success": False, "error": f"No parser for {file_ext}", "chunks": [], "metadata": {}}
 
@@ -154,7 +214,7 @@ class DocumentIngestionService:
                 source_type=doc.file_type,
                 extracted_fact=f"Ingested {doc.file_type} document '{doc.filename}' with metadata: {doc.doc_metadata}",
                 source_citation={"filename": doc.filename, "file_type": doc.file_type},
-                extraction_method="DOCUMENT_INGESTION_PARSER"
+                extraction_method=result.get("metadata", {}).get("extraction_method", "DOCUMENT_INGESTION_PARSER")
             )
 
             EventService.create_event(

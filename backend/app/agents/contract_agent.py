@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.app.agents.base import BaseAgent
-from backend.app.services.document_retriever import SqliteDocumentRetriever, DocumentChunkDTO
+from backend.app.services.document_retriever import HybridDocumentRetriever, DocumentChunkDTO
 from backend.app.services.dynamic_extractor import DynamicExtractor
 from backend.app.services.grounding_validator import GroundingValidator
 
@@ -30,19 +30,40 @@ class ContractIntelligenceAgent(BaseAgent):
     def __init__(self):
         super().__init__(
             agent_name="ContractIntelligenceAgent",
-            purpose="Extract semantic contractual terms, billing basis, and off-rent triggers from contract documents."
+            purpose="Extract semantic contractual terms, billing basis, and off-rent triggers from contract documents using Hybrid RAG."
         )
 
     def extract_findings(self, db: Session, investigation_id: str) -> ContractAgentResponse:
-        retriever = SqliteDocumentRetriever(db)
-        chunks = retriever.get_chunks_for_investigation(investigation_id)
+        retriever = HybridDocumentRetriever(db)
+        
+        # 1. Retrieve all contract chunks or run targeted clause retrieval across large MSAs
+        all_chunks = retriever.get_chunks_for_investigation(investigation_id, file_types=["PDF"])
+        
+        # If large document set (> 5 pages), perform targeted Hybrid RAG clause searches
+        if len(all_chunks) > 5:
+            target_queries = [
+                "standby weather credit",
+                "off-rent notice deadline",
+                "daily rental rate",
+                "physical pickup condition",
+                "billing continues until pickup"
+            ]
+            retrieved_chunk_dict = {}
+            for q in target_queries:
+                matched = retriever.search_clauses(investigation_id, q, top_k=3)
+                for mc in matched:
+                    retrieved_chunk_dict[mc.id] = mc
+            chunks = list(retrieved_chunk_dict.values())
+        else:
+            chunks = all_chunks
 
         chunks_data = [
             {
                 "document_id": c.document_id,
                 "filename": c.source_document_filename,
                 "page": c.page_number or 1,
-                "content": c.content
+                "content": c.content,
+                "score": c.score
             }
             for c in chunks
         ]

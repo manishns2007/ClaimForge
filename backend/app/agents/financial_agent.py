@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.app.agents.base import BaseAgent
-from backend.app.services.document_retriever import SqliteDocumentRetriever, DocumentChunkDTO
+from backend.app.services.document_retriever import HybridDocumentRetriever, DocumentChunkDTO
 from backend.app.services.dynamic_extractor import DynamicExtractor
 from backend.app.services.grounding_validator import GroundingValidator
 
@@ -38,7 +38,7 @@ class FinancialInvestigator(BaseAgent):
         )
 
     def extract_line_items(self, db: Session, investigation_id: str) -> FinancialAgentResponse:
-        retriever = SqliteDocumentRetriever(db)
+        retriever = HybridDocumentRetriever(db)
         chunks = retriever.get_chunks_for_investigation(investigation_id)
 
         invoice_chunks_payload = [

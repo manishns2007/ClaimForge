@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.agents.base import BaseAgent
 from backend.app.db.models import Evidence
-from backend.app.services.document_retriever import SqliteDocumentRetriever
+from backend.app.services.document_retriever import HybridDocumentRetriever
 
 
 class ContradictionFindingItem(BaseModel):
@@ -27,7 +27,7 @@ class ContradictionHunter(BaseAgent):
     def __init__(self):
         super().__init__(
             agent_name="ContradictionHunter",
-            purpose="Adversarially search available evidence to DISPROVE and invalidate candidate claims."
+            purpose="Adversarially search available evidence to DISPROVE and invalidate candidate claims using Hybrid RAG."
         )
 
     def search_for_contradictions(
@@ -38,12 +38,26 @@ class ContradictionHunter(BaseAgent):
         supporting_evidence_ids: List[str]
     ) -> ContradictionAgentResponse:
         """
-        Adversarially scans all uploaded documents and evidence for counter-arguments.
+        Adversarially scans all uploaded documents and evidence for counter-arguments using Hybrid RAG.
         Validates returned evidence_ids against database.
         """
-        retriever = SqliteDocumentRetriever(db)
-        chunks = retriever.get_chunks_for_investigation(investigation_id)
+        retriever = HybridDocumentRetriever(db)
+        all_chunks = retriever.get_chunks_for_investigation(investigation_id)
 
+        # Adversarially search for counter-arguments
+        counter_queries = [
+            "contract amendment override",
+            "physical equipment pickup condition",
+            "billing continues until pickup",
+            "written notice alone does not terminate charges"
+        ]
+        adversarial_chunks_dict = {c.id: c for c in all_chunks}
+        for cq in counter_queries:
+            matches = retriever.search_chunks(investigation_id, keywords=cq.split(), top_k=2)
+            for m in matches:
+                adversarial_chunks_dict[m.id] = m
+
+        chunks = list(adversarial_chunks_dict.values())
         all_evidence = db.query(Evidence).filter(Evidence.investigation_id == investigation_id).all()
 
         doc_contents = [
@@ -51,7 +65,8 @@ class ContradictionHunter(BaseAgent):
                 "document_id": c.document_id,
                 "filename": c.source_document_filename,
                 "page": c.page_number or 1,
-                "content": c.content
+                "content": c.content,
+                "score": c.score
             }
             for c in chunks
         ]
