@@ -10,6 +10,7 @@ from backend.app.db.models import (
 )
 from backend.app.services.event_service import EventService
 from backend.app.services.evidence_service import EvidenceService
+from backend.app.services.dynamic_extractor import DynamicExtractor
 from backend.app.engines.telemetry_engine import TelemetryEngine
 from backend.app.services.contract_rule_normalizer import ContractRuleNormalizer, NormalizedContractRule
 from backend.app.services.charge_normalizer import ChargeNormalizer, NormalizedCharge
@@ -17,12 +18,15 @@ from backend.app.engines.reconciliation_engine import ReconciliationEngine, Reco
 from backend.app.engines.claim_engine import ClaimEngine, ClaimCandidate
 from backend.app.engines.scoring_engine import ScoringEngine, ScoreBreakdown
 
+
 class DeterministicInvestigationPipeline:
     @staticmethod
     def run_investigation(db: Session, investigation_id: str) -> Dict[str, Any]:
         """
-        Executes complete deterministic investigation pipeline:
-        Telemetry normalization -> Contract Rule extraction -> Charge Normalization -> Financial Reconciliation -> Claim Candidate -> Transparent Scoring -> Recommendation -> Persistence.
+        Executes complete deterministic, document-grounded investigation pipeline:
+        Telemetry normalization -> Dynamic Contract Rule extraction -> Dynamic Charge Extraction
+        -> Grounding Validation -> Financial Reconciliation -> Claim Candidate -> Transparent Scoring -> Persistence.
+        Never fabricates or synthesizes missing values.
         """
         investigation = db.query(Investigation).filter(Investigation.id == investigation_id).first()
         if not investigation:
@@ -52,7 +56,6 @@ class DeterministicInvestigationPipeline:
         telemetry_docs = [d for d in documents if d.file_type == "CSV"]
         
         telemetry_df = pd.DataFrame()
-        off_rent_event_ts: Optional[datetime] = None
         engine_shutdown_ts: Optional[datetime] = None
         physical_pickup_ts: Optional[datetime] = None
 
@@ -110,28 +113,25 @@ class DeterministicInvestigationPipeline:
         email_docs = [d for d in documents if d.file_type in ["EML", "TXT"]]
         off_rent_notice_ts: Optional[datetime] = None
         vendor_ack_ts: Optional[datetime] = None
-        email_has_standby_notice = False
 
         for ed in email_docs:
             chunks = db.query(DocumentChunk).filter(DocumentChunk.document_id == ed.id).all()
             full_text = "\n".join([c.content for c in chunks])
 
-            # Deterministic pattern matching for timestamps and keywords
-            if "off-rent" in full_text.lower() or "off rent" in full_text.lower():
-                # Extract notice date
-                if "June 11" in full_text or "Jun 11" in full_text:
-                    off_rent_notice_ts = datetime(2026, 6, 11, 14, 41, 0, tzinfo=timezone.utc)
-                elif "July 5" in full_text or "Jul 5" in full_text:
-                    off_rent_notice_ts = datetime(2026, 7, 5, 12, 0, 0, tzinfo=timezone.utc)
+            comm_events = DynamicExtractor.extract_communication_events(
+                text=full_text,
+                filename=ed.filename,
+                doc_id=ed.id
+            )
 
-                if "acknowledged" in full_text.lower() or "logged effective" in full_text.lower():
-                    vendor_ack_ts = off_rent_notice_ts or datetime(2026, 6, 11, 14, 45, 0, tzinfo=timezone.utc)
-
-            if "standby" in full_text.lower() or "storm" in full_text.lower():
-                email_has_standby_notice = True
+            for ce in comm_events:
+                if ce.event_type == "OFF_RENT_REQUEST" and ce.timestamp and off_rent_notice_ts is None:
+                    off_rent_notice_ts = ce.timestamp
+                elif ce.event_type == "OFF_RENT_ACKNOWLEDGEMENT" and ce.timestamp and vendor_ack_ts is None:
+                    vendor_ack_ts = ce.timestamp
 
         # ----------------------------------------------------
-        # Step 3: Extract Contract Rules (PDFs)
+        # Step 3: Extract Contract Rules (PDFs/All Docs)
         # ----------------------------------------------------
         pdf_docs = [d for d in documents if d.file_type == "PDF"]
         normalized_rules: List[NormalizedContractRule] = []
@@ -141,44 +141,38 @@ class DeterministicInvestigationPipeline:
             chunks = db.query(DocumentChunk).filter(DocumentChunk.document_id == pd_doc.id).all()
             full_text = "\n".join([c.content for c in chunks])
 
-            # Check for Contract Amendment (Clause 4.2 counter-evidence)
-            if "amendment" in pd_doc.filename.lower() or "clause 4.2" in full_text.lower():
-                has_pickup_amendment = True
-                rule = ContractRuleNormalizer.normalize_rule(
-                    rule_type="OFF_RENT_TRIGGER",
-                    value="PHYSICAL_PICKUP",
-                    section_reference="Clause 4.2",
-                    source_document_id=pd_doc.id,
-                    source_citation={"filename": pd_doc.filename, "page": 1}
-                )
-                normalized_rules.append(rule)
-            elif "off-rent billing basis" in full_text.lower() or "clause 3.1" in full_text.lower():
-                rule = ContractRuleNormalizer.normalize_rule(
-                    rule_type="OFF_RENT_TRIGGER",
-                    value="EMAIL_NOTIFICATION",
-                    section_reference="Clause 3.1",
-                    source_document_id=pd_doc.id,
-                    source_citation={"filename": pd_doc.filename, "page": 1}
-                )
-                normalized_rules.append(rule)
+            extracted_rules = DynamicExtractor.extract_contract_rules(
+                text=full_text,
+                filename=pd_doc.filename,
+                doc_id=pd_doc.id,
+                page=1
+            )
 
-            # Daily rate extraction
-            if "$1,500" in full_text or "1500" in full_text:
-                rule = ContractRuleNormalizer.normalize_rule(
-                    rule_type="DAILY_RATE",
-                    value=1500.0,
-                    source_citation={"filename": pd_doc.filename, "page": 1}
-                )
-                normalized_rules.append(rule)
+            for er in extracted_rules:
+                if er.rule_type == "OFF_RENT_TRIGGER" and er.rule_value == "PHYSICAL_PICKUP":
+                    has_pickup_amendment = True
 
-            # Standby rate extraction
-            if "$500" in full_text or "standby rate" in full_text.lower():
-                rule = ContractRuleNormalizer.normalize_rule(
-                    rule_type="STANDBY_RATE",
-                    value=500.0,
-                    source_citation={"filename": pd_doc.filename, "page": 1}
+                norm_rule = ContractRuleNormalizer.normalize_rule(
+                    rule_type=er.rule_type,
+                    value=er.rule_value,
+                    section_reference=er.section_reference,
+                    source_document_id=pd_doc.id,
+                    source_citation={"filename": pd_doc.filename, "page": er.page, "matched_text": er.matched_text}
                 )
-                normalized_rules.append(rule)
+                normalized_rules.append(norm_rule)
+
+                # Persist ContractRule in DB
+                db_rule = ContractRule(
+                    investigation_id=investigation_id,
+                    source_document_id=pd_doc.id,
+                    rule_type=er.rule_type,
+                    rule_value_json={"value": er.rule_value},
+                    section_reference=er.section_reference,
+                    source_citation={"filename": pd_doc.filename, "page": er.page, "matched_text": er.matched_text}
+                )
+                db.add(db_rule)
+        
+        db.commit()
 
         # Validate contract rules
         rule_val = ContractRuleNormalizer.validate_rules(normalized_rules)
@@ -189,35 +183,46 @@ class DeterministicInvestigationPipeline:
         )
 
         # ----------------------------------------------------
-        # Step 4: Extract Charges from Invoices
+        # Step 4: Extract Charges from Invoices (Grounding Firewall)
         # ----------------------------------------------------
         normalized_charges: List[NormalizedCharge] = []
-        for pd_doc in pdf_docs:
-            if "invoice" in pd_doc.filename.lower():
-                chunks = db.query(DocumentChunk).filter(DocumentChunk.document_id == pd_doc.id).all()
-                full_text = "\n".join([c.content for c in chunks])
+        for pd_doc in documents:
+            chunks = db.query(DocumentChunk).filter(DocumentChunk.document_id == pd_doc.id).all()
+            full_text = "\n".join([c.content for c in chunks])
 
-                billed_amount = 7500.0 if "7,500" in full_text else 4500.0
-                unit_rate = 1500.0
-                units_billed = billed_amount / unit_rate
+            inv_data = DynamicExtractor.extract_invoice_data(
+                text=full_text,
+                filename=pd_doc.filename,
+                doc_id=pd_doc.id,
+                page=1
+            )
 
-                # Date period extraction
-                if "june 8" in full_text.lower():
-                    b_start = datetime(2026, 6, 8, 0, 0, 0, tzinfo=timezone.utc)
-                    b_end = datetime(2026, 6, 13, 0, 0, 0, tzinfo=timezone.utc)
-                elif "july 1" in full_text.lower():
-                    b_start = datetime(2026, 7, 1, 0, 0, 0, tzinfo=timezone.utc)
-                    b_end = datetime(2026, 7, 5, 0, 0, 0, tzinfo=timezone.utc)
-                elif "july 5" in full_text.lower() or "july 9" in full_text.lower():
-                    b_start = datetime(2026, 7, 5, 0, 0, 0, tzinfo=timezone.utc)
-                    b_end = datetime(2026, 7, 9, 0, 0, 0, tzinfo=timezone.utc)
-                else:
-                    b_start = datetime(2026, 6, 8, 0, 0, 0, tzinfo=timezone.utc)
-                    b_end = datetime(2026, 6, 13, 0, 0, 0, tzinfo=timezone.utc)
+            # Check if this document contains an actual invoice / charge with billed amount
+            if inv_data.billed_amount and inv_data.billed_amount.value > 0:
+                billed_amount = inv_data.billed_amount.value
+                unit_rate = inv_data.unit_rate.value if inv_data.unit_rate else 0.0
+                units_billed = inv_data.units_billed.value if inv_data.units_billed else 0.0
+
+                # Deterministic fallback calculation only from grounded values
+                if unit_rate > 0 and units_billed == 0:
+                    units_billed = billed_amount / unit_rate
+                elif units_billed > 0 and unit_rate == 0:
+                    unit_rate = billed_amount / units_billed
+                elif unit_rate == 0 and units_billed == 0:
+                    unit_rate = billed_amount
+                    units_billed = 1.0
+
+                vendor_name = inv_data.vendor_name.value if inv_data.vendor_name else "Unknown Vendor"
+                invoice_number = inv_data.invoice_number.value if inv_data.invoice_number else "INV-UNKNOWN"
+                equipment_id = inv_data.equipment_id.value if inv_data.equipment_id else None
+
+                b_start = inv_data.billing_start.value if inv_data.billing_start else None
+                b_end = inv_data.billing_end.value if inv_data.billing_end else None
 
                 charge = ChargeNormalizer.normalize_charge(
-                    invoice_number="INV-2026-90412",
-                    vendor_name="Heavy Machinery Rentals Corp",
+                    invoice_number=invoice_number,
+                    vendor_name=vendor_name,
+                    equipment_id=equipment_id,
                     charge_type="RENTAL",
                     units_billed=units_billed,
                     unit_rate=unit_rate,
@@ -225,29 +230,88 @@ class DeterministicInvestigationPipeline:
                     billing_start=b_start,
                     billing_end=b_end,
                     source_document_id=pd_doc.id,
-                    source_citation={"filename": pd_doc.filename, "page": 1}
+                    source_citation={
+                        "filename": pd_doc.filename,
+                        "page": 1,
+                        "matched_amount": inv_data.billed_amount.matched_text,
+                        "confidence": inv_data.billed_amount.confidence
+                    }
                 )
                 normalized_charges.append(charge)
+
+                # Persist Charge record in DB
+                db_charge = Charge(
+                    investigation_id=investigation_id,
+                    source_document_id=pd_doc.id,
+                    charge_type="RENTAL",
+                    description=f"{equipment_id or 'Equipment'} Rental ({units_billed} units @ ${unit_rate}/unit)",
+                    billed_amount=billed_amount,
+                    expected_amount=None,
+                    unit_rate=unit_rate,
+                    units_billed=units_billed,
+                    source_citation={"filename": pd_doc.filename, "page": 1}
+                )
+                db.add(db_charge)
+
+        db.commit()
 
         EventService.create_event(
             db, investigation_id, "CHARGES_NORMALIZED",
             f"Normalized {len(normalized_charges)} invoice charge(s)."
         )
 
+        # ----------------------------------------------------
+        # Grounding Firewall: If NO financial items found in documents
+        # ----------------------------------------------------
         if not normalized_charges:
-            # Fallback charge if invoice parsing wasn't explicit
-            charge = ChargeNormalizer.normalize_charge(
-                invoice_number="INV-DEFAULT",
-                vendor_name="Heavy Machinery Rentals Corp",
-                charge_type="RENTAL",
-                units_billed=5.0,
-                unit_rate=1500.0,
-                billed_amount=7500.0,
-                billing_start=datetime(2026, 6, 8, 0, 0, 0, tzinfo=timezone.utc),
-                billing_end=datetime(2026, 6, 13, 0, 0, 0, tzinfo=timezone.utc),
-                source_citation={"filename": "invoice.pdf"}
+            logger.info(f"[{investigation_id}] No financial charges found in uploaded documents. Routing to HUMAN_REVIEW without fabricated values.")
+            
+            db_claim = Claim(
+                investigation_id=investigation_id,
+                vendor_name="N/A",
+                invoice_number="N/A",
+                original_amount=0.0,
+                disputed_amount=0.0,
+                reason="No verified document-grounded financial charges found in uploaded documents. Human review required.",
+                recoverability_score=0.0,
+                expected_recovery_value=0.0,
+                recommendation="HUMAN_REVIEW",
+                status="HUMAN_REVIEW"
             )
-            normalized_charges.append(charge)
+            db.add(db_claim)
+            db.commit()
+            db.refresh(db_claim)
+
+            investigation.status = "COMPLETED"
+            investigation.total_analyzed_amount = 0.0
+            investigation.total_disputed_amount = 0.0
+            investigation.total_expected_recovery = 0.0
+            db.commit()
+
+            EventService.create_event(
+                db, investigation_id, "INVESTIGATION_COMPLETED",
+                "Investigation completed. No financial charges detected in uploaded documents. Status: HUMAN_REVIEW",
+                {
+                    "claim_id": db_claim.id,
+                    "disputed_amount": 0.0,
+                    "expected_recovery": 0.0,
+                    "score": 0.0,
+                    "recommendation": "HUMAN_REVIEW"
+                }
+            )
+
+            return {
+                "success": True,
+                "investigation_id": investigation_id,
+                "claim_id": db_claim.id,
+                "original_amount": 0.0,
+                "disputed_amount": 0.0,
+                "expected_recovery_value": 0.0,
+                "score": 0.0,
+                "recommendation": "HUMAN_REVIEW",
+                "reason": db_claim.reason,
+                "audit_record": {"status": "NO_CHARGES_FOUND"}
+            }
 
         primary_charge = normalized_charges[0]
 
@@ -305,11 +369,11 @@ class DeterministicInvestigationPipeline:
         if has_pickup_amendment:
             ev_contra = EvidenceService.create_evidence(
                 db, investigation_id, None, "PDF",
-                "Contract Amendment Clause 4.2 explicitly stipulates that billing continues until physical equipment pickup.",
-                {"filename": "amendment_clause.pdf", "clause": "Clause 4.2"}
+                "Contract Amendment explicitly stipulates that billing continues until physical equipment pickup.",
+                {"filename": "amendment_clause.pdf", "clause": "Pickup Condition Amendment"}
             )
             contradiction_evidence_ids.append(ev_contra.id)
-            contradiction_reason = "Contract Amendment Clause 4.2 overrides off-rent notice cutoff. Billing valid until physical pickup."
+            contradiction_reason = "Contract Amendment overrides off-rent notice cutoff. Billing valid until physical pickup."
 
         # ----------------------------------------------------
         # Step 7: Evaluate Claim Candidate & Calculate Score

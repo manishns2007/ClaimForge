@@ -4,12 +4,14 @@ from sqlalchemy.orm import Session
 
 from backend.app.agents.base import BaseAgent
 
+
 class EventHypothesis(BaseModel):
     event_type: str
     timestamp_iso: Optional[str] = None
     description: str
     supporting_evidence_ids: List[str] = []
-    confidence: float
+    confidence: float = 1.0
+
 
 class ClaimHypothesis(BaseModel):
     claim_type: str
@@ -18,12 +20,14 @@ class ClaimHypothesis(BaseModel):
     reason: str
     supporting_evidence_ids: List[str] = []
     missing_evidence: List[str] = []
-    initial_hypothesis_strength: float
+    initial_hypothesis_strength: float = 0.85
+
 
 class EventReasoningResponse(BaseModel):
     status: str
-    chronological_timeline: List[EventHypothesis]
+    chronological_timeline: List[EventHypothesis] = []
     proposed_claim: Optional[ClaimHypothesis] = None
+
 
 class EventReasoningAgent(BaseAgent):
     def __init__(self):
@@ -57,14 +61,24 @@ class EventReasoningAgent(BaseAgent):
                     confidence=comm.get("confidence", 0.9)
                 ))
 
-            # Synthesize claim hypothesis
-            proposed = ClaimHypothesis(
-                claim_type="EXCESS_RENTAL_PERIOD_OVERCHARGE",
-                vendor_name="Heavy Machinery Rentals Corp",
-                invoice_number="INV-2026-90412",
-                reason="Invoice charges billing period extending past off-rent cutoff.",
-                initial_hypothesis_strength=0.85
-            )
+            # Synthesize claim hypothesis only if document-grounded financial findings exist
+            fin_items = inp.get("financial_findings", [])
+            proposed: Optional[ClaimHypothesis] = None
+
+            if fin_items:
+                primary_fin = fin_items[0]
+                v_name = primary_fin.get("vendor_name", "Unknown Vendor")
+                inv_num = primary_fin.get("invoice_number", "INV-UNKNOWN")
+                billed_amt = primary_fin.get("billed_amount", 0.0)
+
+                if billed_amt > 0:
+                    proposed = ClaimHypothesis(
+                        claim_type="EXCESS_RENTAL_PERIOD_OVERCHARGE",
+                        vendor_name=v_name,
+                        invoice_number=inv_num,
+                        reason=f"Invoice {inv_num} charges billing period extending past off-rent cutoff.",
+                        initial_hypothesis_strength=0.85
+                    )
 
             return EventReasoningResponse(
                 status="COMPLETED",

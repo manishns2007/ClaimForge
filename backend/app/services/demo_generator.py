@@ -87,8 +87,10 @@ class DemoDatasetGenerator:
         invoice_pdf = target_dir / "invoice_case_b.pdf"
         c = canvas.Canvas(str(invoice_pdf))
         c.drawString(100, 750, "INVOICE #INV-2026-4412")
-        c.drawString(100, 730, "Billing Period: July 1 to July 5 (5 days @ $1,500.00/day)")
-        c.drawString(100, 710, "Total Billed: $7,500.00")
+        c.drawString(100, 730, "Vendor: Machinery Rental Solutions")
+        c.drawString(100, 710, "Billing Period: July 1, 2026 to July 5, 2026")
+        c.drawString(100, 690, "Item: Equipment Rental — 5 days @ $1,500.00/day")
+        c.drawString(100, 670, "Total Amount Billed: $7,500.00")
         c.save()
 
         email_eml = target_dir / "email_case_b.eml"
@@ -125,10 +127,12 @@ class DemoDatasetGenerator:
         
         contract_pdf = target_dir / "contract_case_c.pdf"
         c = canvas.Canvas(str(contract_pdf))
-        c.drawString(100, 750, "RENTAL AGREEMENT #RA-9901")
-        c.drawString(100, 730, "Lessor: Global Equipment Corp")
+        c.drawString(100, 750, "RENTAL AGREEMENT & INVOICE #INV-2026-9901")
+        c.drawString(100, 730, "Lessor / Vendor: Global Equipment Corp")
         c.drawString(100, 710, "Daily Rate: $1,500.00 / day")
-        c.drawString(100, 690, "Clause 2.1: Off-rent notice stops billing.")
+        c.drawString(100, 690, "Billing Period: July 5, 2026 to July 9, 2026")
+        c.drawString(100, 670, "Total Amount Billed: $6,000.00")
+        c.drawString(100, 650, "Clause 2.1: Off-rent notice stops billing.")
         c.save()
 
         # Contract Amendment (Counter Evidence!)

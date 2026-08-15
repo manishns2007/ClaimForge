@@ -5,18 +5,22 @@ from sqlalchemy.orm import Session
 
 from backend.app.agents.base import BaseAgent
 from backend.app.db.models import Document, DocumentChunk
+from backend.app.services.dynamic_extractor import DynamicExtractor
+
 
 class CommunicationEventItem(BaseModel):
-    event_type: str  # OFF_RENT_REQUEST, OFF_RENT_ACKNOWLEDGEMENT, EXTENSION_REQUEST, PICKUP_REQUEST
+    event_type: str  # OFF_RENT_REQUEST, OFF_RENT_ACKNOWLEDGEMENT, EXTENSION_REQUEST, PICKUP_REQUEST, STANDBY_NOTICE
     timestamp_iso: Optional[str] = None
-    participants: str
-    statement: str
-    confidence: float
+    participants: str = ""
+    statement: str = ""
+    confidence: float = 1.0
     source_document_id: Optional[str] = None
+
 
 class CommunicationAgentResponse(BaseModel):
     status: str
-    events: List[CommunicationEventItem]
+    events: List[CommunicationEventItem] = []
+
 
 class CommunicationInvestigator(BaseAgent):
     def __init__(self):
@@ -44,31 +48,35 @@ class CommunicationInvestigator(BaseAgent):
         input_data = {"investigation_id": investigation_id, "email_chunks": email_chunks}
 
         def fallback_handler(db_sess: Session, inv_id: str, inp: Dict[str, Any]) -> CommunicationAgentResponse:
-            events = []
+            events: List[CommunicationEventItem] = []
+            seen_events = set()
+
             for ch in inp.get("email_chunks", []):
-                text = ch["content"].lower()
+                text = ch["content"]
                 doc_id = ch["document_id"]
+                fname = ch.get("filename", "")
 
-                if "off-rent" in text or "off rent" in text:
-                    ts = "2026-06-11T14:41:00Z" if "june 11" in text or "jun 11" in text else "2026-07-05T12:00:00Z"
-                    events.append(CommunicationEventItem(
-                        event_type="OFF_RENT_REQUEST",
-                        timestamp_iso=ts,
-                        participants="Lessee -> Vendor Dispatch",
-                        statement="Lessee transmitted off-rent request for CAT 320 Excavator.",
-                        confidence=0.95,
-                        source_document_id=doc_id
-                    ))
+                comm_events = DynamicExtractor.extract_communication_events(
+                    text=text,
+                    filename=fname,
+                    doc_id=doc_id
+                )
 
-                    if "acknowledged" in text or "logged effective" in text:
+                for ce in comm_events:
+                    ev_key = f"{ce.event_type}::{ce.timestamp_iso}::{doc_id}"
+                    if ev_key not in seen_events:
+                        seen_events.add(ev_key)
                         events.append(CommunicationEventItem(
-                            event_type="OFF_RENT_ACKNOWLEDGEMENT",
-                            timestamp_iso="2026-06-11T14:45:00Z",
-                            participants="Vendor Dispatch -> Lessee",
-                            statement="Vendor acknowledged off-rent request effective immediately.",
-                            confidence=0.95,
+                            event_type=ce.event_type,
+                            timestamp_iso=ce.timestamp_iso,
+                            participants=ce.participants,
+                            statement=ce.statement,
+                            confidence=ce.confidence,
                             source_document_id=doc_id
                         ))
+
+            if not events:
+                return CommunicationAgentResponse(status="NO_COMMUNICATION_EVENTS_FOUND", events=[])
 
             return CommunicationAgentResponse(status="COMPLETED", events=events)
 

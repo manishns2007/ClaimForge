@@ -1,24 +1,27 @@
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend.app.agents.base import BaseAgent
 from backend.app.db.models import Document, DocumentChunk
-from backend.app.services.contract_rule_normalizer import ContractRuleNormalizer, NormalizedContractRule
+from backend.app.services.dynamic_extractor import DynamicExtractor
+
 
 class ContractFindingItem(BaseModel):
     rule_type: str  # BILLING_BASIS, DAILY_RATE, HOURLY_RATE, OFF_RENT_TRIGGER, PICKUP_CONDITION, STANDBY_RATE
     rule_value: Any
-    clarity: str  # EXPLICIT, IMPLIED, UNKNOWN
-    confidence: float
+    clarity: str = "EXPLICIT"  # EXPLICIT, IMPLIED, UNKNOWN
+    confidence: float = 1.0
     source_document_id: Optional[str] = None
     page: Optional[int] = 1
     section_reference: Optional[str] = None
     evidence_text: str
 
+
 class ContractAgentResponse(BaseModel):
-    status: str  # COMPLETED, AI_UNAVAILABLE
-    findings: List[ContractFindingItem]
+    status: str  # COMPLETED, NO_CONTRACT_RULES_FOUND
+    findings: List[ContractFindingItem] = []
+
 
 class ContractIntelligenceAgent(BaseAgent):
     def __init__(self):
@@ -28,13 +31,12 @@ class ContractIntelligenceAgent(BaseAgent):
         )
 
     def extract_findings(self, db: Session, investigation_id: str) -> ContractAgentResponse:
-        pdf_docs = db.query(Document).filter(
-            Document.investigation_id == investigation_id,
-            Document.file_type == "PDF"
+        docs = db.query(Document).filter(
+            Document.investigation_id == investigation_id
         ).all()
 
         chunks_data = []
-        for doc in pdf_docs:
+        for doc in docs:
             chunks = db.query(DocumentChunk).filter(DocumentChunk.document_id == doc.id).all()
             for c in chunks:
                 chunks_data.append({
@@ -47,58 +49,36 @@ class ContractIntelligenceAgent(BaseAgent):
         input_data = {"investigation_id": investigation_id, "document_chunks": chunks_data}
 
         def fallback_handler(db_sess: Session, inv_id: str, inp: Dict[str, Any]) -> ContractAgentResponse:
-            findings = []
+            findings: List[ContractFindingItem] = []
+            seen_rules = set()
+
             for ch in inp.get("document_chunks", []):
-                text = ch["content"].lower()
-                fname = ch["filename"].lower()
+                text = ch["content"]
+                fname = ch["filename"]
                 doc_id = ch["document_id"]
-                page = ch["page"]
+                page = ch.get("page", 1)
 
-                if "amendment" in fname or "clause 4.2" in text:
-                    findings.append(ContractFindingItem(
-                        rule_type="OFF_RENT_TRIGGER",
-                        rule_value="PHYSICAL_PICKUP",
-                        clarity="EXPLICIT",
-                        confidence=0.95,
-                        source_document_id=doc_id,
-                        page=page,
-                        section_reference="Clause 4.2",
-                        evidence_text="Billing continues until physical equipment pickup and transport."
-                    ))
-                elif "off-rent billing basis" in text or "clause 3.1" in text:
-                    findings.append(ContractFindingItem(
-                        rule_type="OFF_RENT_TRIGGER",
-                        rule_value="EMAIL_NOTIFICATION",
-                        clarity="EXPLICIT",
-                        confidence=0.95,
-                        source_document_id=doc_id,
-                        page=page,
-                        section_reference="Clause 3.1",
-                        evidence_text="Billing shall cease immediately upon off-rent notice or email acknowledgement."
-                    ))
+                rules = DynamicExtractor.extract_contract_rules(
+                    text=text,
+                    filename=fname,
+                    doc_id=doc_id,
+                    page=page
+                )
 
-                if "daily rental rate" in text or "$1,500" in text or "1500" in text:
-                    findings.append(ContractFindingItem(
-                        rule_type="DAILY_RATE",
-                        rule_value=1500.0,
-                        clarity="EXPLICIT",
-                        confidence=1.0,
-                        source_document_id=doc_id,
-                        page=page,
-                        evidence_text="Daily rental rate: $1,500.00 / day"
-                    ))
-
-                if "standby rate" in text or "$500" in text:
-                    findings.append(ContractFindingItem(
-                        rule_type="STANDBY_RATE",
-                        rule_value=500.0,
-                        clarity="EXPLICIT",
-                        confidence=0.9,
-                        source_document_id=doc_id,
-                        page=page,
-                        section_reference="Clause 5.2",
-                        evidence_text="Standby rate of $500.00/day applies during weather shutdowns."
-                    ))
+                for r in rules:
+                    rule_key = f"{r.rule_type}::{r.rule_value}::{doc_id}"
+                    if rule_key not in seen_rules:
+                        seen_rules.add(rule_key)
+                        findings.append(ContractFindingItem(
+                            rule_type=r.rule_type,
+                            rule_value=r.rule_value,
+                            clarity="EXPLICIT",
+                            confidence=r.confidence,
+                            source_document_id=doc_id,
+                            page=page,
+                            section_reference=r.section_reference,
+                            evidence_text=r.matched_text
+                        ))
 
             return ContractAgentResponse(status="COMPLETED", findings=findings)
 

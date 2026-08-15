@@ -1,9 +1,12 @@
+import re
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from backend.app.agents.base import BaseAgent
 from backend.app.db.models import Document, DocumentChunk, Evidence
+from backend.app.services.dynamic_extractor import DynamicExtractor
+
 
 class ContradictionFindingItem(BaseModel):
     contradiction_type: str  # CONTRACT_AMENDMENT_OVERRIDE, CONTINUED_OPERATION, LATE_PICKUP_AGREEMENT, STANDBY_CLAUSE_APPLIES
@@ -13,10 +16,12 @@ class ContradictionFindingItem(BaseModel):
     source_citations: Dict[str, Any] = {}
     impact: str
 
+
 class ContradictionAgentResponse(BaseModel):
     status: str
-    has_contradiction: bool
-    findings: List[ContradictionFindingItem]
+    has_contradiction: bool = False
+    findings: List[ContradictionFindingItem] = []
+
 
 class ContradictionHunter(BaseAgent):
     def __init__(self):
@@ -68,28 +73,39 @@ class ContradictionHunter(BaseAgent):
 
         def fallback_handler(db_sess: Session, inv_id: str, inp: Dict[str, Any]) -> ContradictionAgentResponse:
             findings: List[ContradictionFindingItem] = []
-            
-            # Check for Contract Amendment counter-evidence (e.g. Case C)
+            seen_contradictions = set()
+
+            # Check for Contract Amendment counter-evidence
             for d in inp.get("all_documents", []):
                 fname = d["filename"].lower()
-                content = d["content"].lower()
+                content = d["content"]
+                content_lower = content.lower()
+                doc_id = d["document_id"]
+                page = d.get("page", 1)
 
-                if "amendment" in fname or "clause 4.2" in content or "billing continues until physical equipment pickup" in content:
-                    # Find corresponding Evidence ID if recorded
-                    matching_ev = db_sess.query(Evidence).filter(
-                        Evidence.investigation_id == inv_id,
-                        Evidence.extracted_fact.like("%Clause 4.2%")
-                    ).first()
-                    ev_ids = [matching_ev.id] if matching_ev else []
+                if "amendment" in fname or "amendment" in content_lower:
+                    if re.search(r"(?:physical|equipment)\s+(?:pickup|transport|return)", content_lower) or "pickup" in content_lower:
+                        sec_match = re.search(r"(Clause\s+\d+(?:\.\d+)?|Section\s+\d+(?:\.\d+)?)", content, re.IGNORECASE)
+                        sec_ref = sec_match.group(1) if sec_match else "Contract Amendment"
 
-                    findings.append(ContradictionFindingItem(
-                        contradiction_type="CONTRACT_AMENDMENT_OVERRIDE",
-                        description="Contract Amendment Clause 4.2 explicitly stipulates that billing continues until physical equipment pickup.",
-                        severity="CRITICAL",
-                        evidence_ids=ev_ids,
-                        source_citations={"filename": d["filename"], "clause": "Clause 4.2"},
-                        impact="Invalidates off-rent email cutoff claim. Billed charges are 100% contractually valid."
-                    ))
+                        contra_key = f"{doc_id}::{sec_ref}"
+                        if contra_key not in seen_contradictions:
+                            seen_contradictions.add(contra_key)
+
+                            matching_ev = db_sess.query(Evidence).filter(
+                                Evidence.investigation_id == inv_id,
+                                Evidence.source_document_id == doc_id
+                            ).first()
+                            ev_ids = [matching_ev.id] if matching_ev else []
+
+                            findings.append(ContradictionFindingItem(
+                                contradiction_type="CONTRACT_AMENDMENT_OVERRIDE",
+                                description=f"{sec_ref} explicitly stipulates that billing continues until physical equipment pickup and transport.",
+                                severity="CRITICAL",
+                                evidence_ids=ev_ids,
+                                source_citations={"filename": d["filename"], "clause": sec_ref, "page": page},
+                                impact="Invalidates off-rent email cutoff claim. Billed charges are contractually valid per amendment."
+                            ))
 
             # Validate evidence IDs against DB
             validated_findings = []
@@ -111,7 +127,6 @@ class ContradictionHunter(BaseAgent):
             fallback_fn=fallback_handler
         )
 
-        # Ensure evidence IDs returned by Gemini or fallback are validated
         for item in resp.findings:
             item.evidence_ids = self.validate_evidence_ids(db, investigation_id, item.evidence_ids)
 
