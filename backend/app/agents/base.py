@@ -42,9 +42,9 @@ class BaseAgent:
         openai_key = getattr(settings, "OPENAI_API_KEY", None) or os.getenv("OPENAI_API_KEY")
 
         if gemini_key:
-            # Set GEMINI_API_KEY environment variable for google-gla
+            # Set GEMINI_API_KEY environment variable for google provider
             os.environ["GEMINI_API_KEY"] = gemini_key
-            model_name = "google-gla:gemini-1.5-flash"
+            model_name = "google:gemini-2.0-flash"
         elif openai_key:
             os.environ["OPENAI_API_KEY"] = openai_key
             model_name = "openai:gpt-4o-mini"
