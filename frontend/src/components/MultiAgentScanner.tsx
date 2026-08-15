@@ -7,7 +7,6 @@ import {
   Sparkles, 
   Play, 
   Pause,
-  ArrowRight,
   FileSpreadsheet,
   Mail
 } from 'lucide-react';
@@ -360,16 +359,7 @@ export const MultiAgentScanner: React.FC<{ onOpenWorkspace?: (id: string) => voi
           )}
         </div>
 
-        {onOpenWorkspace && (
-          <div className="bg-[#040D0C] border-t border-[#0E2421] p-3 flex justify-end">
-            <button
-              onClick={() => onOpenWorkspace('inv-101')}
-              className="bg-[#00F2FE] text-[#040D0C] hover:bg-[#00F2FE]/90 rounded-lg px-4 py-1.5 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer border-none"
-            >
-              Inspect High-Recovery Claim Case ($125,000.00) <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
+
       </div>
     </div>
   );
