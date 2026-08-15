@@ -4,7 +4,7 @@ import {
   RefreshCw,
   ArrowLeft
 } from 'lucide-react';
-import { InvestigationDetails, Document } from '../types/api';
+import type { InvestigationDetails, Document } from '../types/api';
 import { fetchInvestigationDetails, runInvestigation } from '../services/api';
 import { InvestigationHeader } from './InvestigationHeader';
 import { ClaimSummary } from './ClaimSummary';
