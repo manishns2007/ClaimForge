@@ -484,7 +484,7 @@ class DynamicExtractor:
 
         # C. Daily Rate extraction from contract
         daily_rate_match = re.search(
-            r"(?:Daily(?:\s+Rental)?\s+Rate|Billing\s+Rate|Rental\s+Rate|Rate)\s*[:$]?\s*(?:USD|\$|₹|€|£)?\s*([\d,]+\.?\d*)\s*(?:/\s*day|\s*per\s+day)?",
+            r"(?:Daily(?:\s+Rental)?\s+Rate|Billing\s+Rate|Rental\s+Rate|Rate)\s*(?:shall\s+be|is|of|[:=])?\s*[:$]?\s*(?:USD|\$|₹|€|£)?\s*([\d,]+\.?\d*)\s*(?:/\s*day|\s*per\s+day)?",
             text,
             re.IGNORECASE
         )
@@ -505,7 +505,7 @@ class DynamicExtractor:
 
         # D. Standby Rate extraction
         standby_match = re.search(
-            r"(?:Standby\s+Rate|Standby)\s*(?:of)?\s*[:$]?\s*(?:USD|\$|₹|€|£)?\s*([\d,]+\.?\d*)\s*(?:/\s*day|\s*per\s+day)?",
+            r"(?:Standby\s+Rate|Standby)\s*(?:shall\s+be|is|of|[:=])?\s*[:$]?\s*(?:USD|\$|₹|€|£)?\s*([\d,]+\.?\d*)\s*(?:/\s*day|\s*per\s+day)?",
             text,
             re.IGNORECASE
         )
