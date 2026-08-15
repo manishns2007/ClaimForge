@@ -5,10 +5,9 @@ import {
   Mail,
   FileCode,
   Eye,
-  CheckCircle2,
   Lock
 } from 'lucide-react';
-import { Document, EvidenceFact } from '../types/api';
+import type { Document, EvidenceFact } from '../types/api';
 
 interface EvidenceVaultProps {
   documents: Document[];
@@ -41,7 +40,6 @@ export const EvidenceVault: React.FC<EvidenceVaultProps> = ({
           </div>
         ) : (
           documents.map((doc) => {
-            const factCount = evidenceFacts.filter(e => e.source_document_id === doc.id).length;
             return (
               <div
                 key={doc.id}

@@ -5,7 +5,7 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
-import { InvestigationEventLog } from '../types/api';
+import type { InvestigationEventLog } from '../types/api';
 import { fetchEvents } from '../services/api';
 
 interface LiveSSELogViewerProps {

@@ -4,8 +4,7 @@ import {
   PlusCircle,
   Upload,
   FileText,
-  AlertCircle,
-  CheckCircle2
+  AlertCircle
 } from 'lucide-react';
 import { createInvestigation, uploadDocuments, runInvestigation } from '../services/api';
 

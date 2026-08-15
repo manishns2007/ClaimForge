@@ -1,14 +1,9 @@
 import React from 'react';
 import {
   Clock,
-  ExternalLink,
-  Zap,
-  Activity,
-  Mail,
-  Truck,
-  FileCheck
+  ExternalLink
 } from 'lucide-react';
-import { TimelineEvent, Document } from '../types/api';
+import type { TimelineEvent, Document } from '../types/api';
 
 interface TimelineViewProps {
   timeline: TimelineEvent[];

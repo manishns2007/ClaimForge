@@ -8,7 +8,7 @@ import {
   CheckCircle2,
   FolderOpen
 } from 'lucide-react';
-import { Investigation } from '../types/api';
+import type { Investigation } from '../types/api';
 
 interface NavbarProps {
   currentView: 'dashboard' | 'investigation';

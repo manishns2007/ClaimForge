@@ -2,11 +2,9 @@ import React from 'react';
 import {
   ShieldCheck,
   Cpu,
-  CheckCircle2,
-  FileCheck,
   Scale
 } from 'lucide-react';
-import { Claim, Investigation } from '../types/api';
+import type { Claim, Investigation } from '../types/api';
 
 interface ClaimSummaryProps {
   investigation: Investigation;

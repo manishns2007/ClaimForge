@@ -1,14 +1,12 @@
 import React from 'react';
 import {
-  ShieldAlert,
   Play,
   CheckCircle2,
   AlertTriangle,
   HelpCircle,
-  XCircle,
-  FileText
+  XCircle
 } from 'lucide-react';
-import { InvestigationDetails } from '../types/api';
+import type { InvestigationDetails } from '../types/api';
 
 interface InvestigationHeaderProps {
   details: InvestigationDetails;

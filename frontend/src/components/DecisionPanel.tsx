@@ -6,18 +6,17 @@ import {
   ShieldCheck,
   Award
 } from 'lucide-react';
-import { Claim, Investigation, Contradiction } from '../types/api';
+import type { Claim, Investigation, Contradiction } from '../types/api';
 
 interface DecisionPanelProps {
   investigation: Investigation;
   claim?: Claim | null;
-  contradictions: Contradiction[];
+  contradictions?: Contradiction[];
 }
 
 export const DecisionPanel: React.FC<DecisionPanelProps> = ({
   investigation,
-  claim,
-  contradictions
+  claim
 }) => {
   const score = claim ? Math.round(claim.recoverability_score * 100) : 0;
   const recommendation = claim ? claim.recommendation : 'HUMAN_REVIEW';

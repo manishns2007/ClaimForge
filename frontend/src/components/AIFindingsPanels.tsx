@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
 import {
-  FileCode,
-  DollarSign,
-  Mail,
   ExternalLink,
-  ChevronDown,
-  ChevronRight,
+  Mail,
   Sparkles
 } from 'lucide-react';
-import { AgentFinding, ContractRuleItem, ChargeItem, Document } from '../types/api';
+import type { AgentFinding, ContractRuleItem, ChargeItem, Document } from '../types/api';
 
 interface AIFindingsPanelsProps {
   findings: AgentFinding[];
@@ -28,8 +24,6 @@ export const AIFindingsPanels: React.FC<AIFindingsPanelsProps> = ({
   const [activeSubTab, setActiveSubTab] = useState<'contract' | 'financial' | 'communication'>('contract');
 
   // Filter agent findings by category
-  const contractFinding = findings.find(f => f.category === 'CONTRACT');
-  const financialFinding = findings.find(f => f.category === 'FINANCIAL');
   const commFinding = findings.find(f => f.category === 'COMMUNICATION');
 
   return (

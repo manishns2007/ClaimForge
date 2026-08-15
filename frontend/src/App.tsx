@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DashboardStats, Investigation } from './types/api';
+import type { DashboardStats, Investigation } from './types/api';
 import { fetchDashboardStats, fetchInvestigations } from './services/api';
 import { Navbar } from './components/Navbar';
 import { ExecutiveDashboard } from './components/ExecutiveDashboard';
@@ -12,7 +12,7 @@ export const App: React.FC = () => {
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [investigations, setInvestigations] = useState<Investigation[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [, setLoading] = useState<boolean>(true);
   const [isSeeding, setIsSeeding] = useState<boolean>(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
 
@@ -50,8 +50,7 @@ export const App: React.FC = () => {
   const handleSeedDemoCases = async () => {
     setIsSeeding(true);
     try {
-      // Trigger backend python audit runner to seed Case A, Case B, Case C
-      const res = await fetch('/api/investigations');
+      await fetch('/api/investigations');
       await loadData();
     } catch (err) {
       console.error('Failed to seed demo cases:', err);

@@ -1,9 +1,7 @@
 import React from 'react';
 import {
   Cpu,
-  ShieldCheck,
-  Zap,
-  Code
+  ShieldCheck
 } from 'lucide-react';
 
 export const AITransparencyPanel: React.FC = () => {

@@ -13,7 +13,7 @@ import {
   PieChart as PieIcon,
   Activity
 } from 'lucide-react';
-import { DashboardStats, Investigation } from '../types/api';
+import type { DashboardStats, Investigation } from '../types/api';
 
 interface ExecutiveDashboardProps {
   stats: DashboardStats | null;
@@ -53,7 +53,6 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
   const rejectedCount = rejectedCases.length;
   const rejectedValue = rejectedCases.reduce((sum, i) => sum + i.total_disputed_amount, 0);
 
-  const totalValueSum = (stats?.total_disputed_amount || 1);
   const recoveryRate = stats && stats.total_disputed_amount > 0
     ? ((stats.total_expected_recovery / stats.total_disputed_amount) * 100).toFixed(1)
     : '0.0';
@@ -339,7 +338,6 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
               {filteredInvestigations.map((inv) => {
                 const isCaseC = inv.title.includes('Case C') || inv.title.includes('Contradicted');
                 const isCaseA = inv.title.includes('Case A') || inv.total_expected_recovery > 0;
-                const isCaseB = inv.title.includes('Case B') || inv.status === 'READY';
 
                 let recType: 'DISPUTE' | 'HUMAN_REVIEW' | 'DO_NOT_DISPUTE' = 'HUMAN_REVIEW';
                 if (isCaseA) recType = 'DISPUTE';

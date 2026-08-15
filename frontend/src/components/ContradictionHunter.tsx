@@ -2,24 +2,19 @@ import React from 'react';
 import {
   ShieldAlert,
   AlertTriangle,
-  FileCheck,
   CheckCircle2,
-  XCircle,
-  ExternalLink,
-  Lock
+  XCircle
 } from 'lucide-react';
-import { Contradiction, Document } from '../types/api';
+import type { Contradiction, Document } from '../types/api';
 
 interface ContradictionHunterProps {
   contradictions: Contradiction[];
-  documents: Document[];
-  onOpenDocument: (doc: Document) => void;
+  documents?: Document[];
+  onOpenDocument?: (doc: Document) => void;
 }
 
 export const ContradictionHunter: React.FC<ContradictionHunterProps> = ({
-  contradictions,
-  documents,
-  onOpenDocument
+  contradictions
 }) => {
   const hasCritical = contradictions.some(c => c.severity === 'CRITICAL');
 

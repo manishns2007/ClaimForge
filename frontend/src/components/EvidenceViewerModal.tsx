@@ -2,16 +2,14 @@ import React, { useState, useEffect } from 'react';
 import {
   X,
   FileText,
-  Eye,
   Download,
   Search,
-  CheckCircle2,
   AlertCircle,
   FileSpreadsheet,
   Mail,
   FileCode
 } from 'lucide-react';
-import { Document, DocumentContent } from '../types/api';
+import type { Document, DocumentContent } from '../types/api';
 import { fetchDocumentContent, getDocumentRawUrl } from '../services/api';
 
 interface EvidenceViewerModalProps {
