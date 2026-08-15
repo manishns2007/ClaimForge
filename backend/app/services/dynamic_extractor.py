@@ -329,7 +329,7 @@ class DynamicExtractor:
 
         # D. Billed Total Amount
         amount_patterns = [
-            (re.compile(r"(?:Total(?:\s+Amount)?(?:\s+Billed)?|Amount\s+Due|Total\s+Due|Total\s+Charges|Balance\s+Due)\s*[:$]?\s*(?:USD|\$|₹|€|£)?\s*([\d,]+\.?\d*)", re.IGNORECASE), 0.95),
+            (re.compile(r"(?:Total(?:\s+Amount)?(?:\s+Due)?(?:\s+Billed)?|Total\s+Amount\s+Due|Amount\s+Due|Total\s+Due|Total\s+Charges|Balance\s+Due)\s*[:$]?\s*(?:USD|\$|₹|€|£)?\s*([\d,]+\.?\d*)", re.IGNORECASE), 0.95),
             (re.compile(r"(?:Invoice\s+Amount|Total\s+Billed)\s*[:$]?\s*(?:USD|\$|₹|€|£)?\s*([\d,]+\.?\d*)", re.IGNORECASE), 0.90),
             (re.compile(r"\bTotal\s*[:$]\s*(?:USD|\$|₹|€|£)?\s*([\d,]+\.?\d*)", re.IGNORECASE), 0.85),
         ]

@@ -3,6 +3,7 @@ import json
 import os
 from typing import Dict, Any, Optional, Type, TypeVar, List, Callable, Tuple
 from pydantic import BaseModel, ValidationError
+from pydantic_ai import Agent
 from sqlalchemy.orm import Session
 
 from backend.app.core.config import settings
@@ -44,7 +45,7 @@ class BaseAgent:
         if gemini_key:
             # Set GEMINI_API_KEY environment variable for google provider
             os.environ["GEMINI_API_KEY"] = gemini_key
-            model_name = "google:gemini-2.0-flash"
+            model_name = "google:gemini-2.5-flash"
         elif openai_key:
             os.environ["OPENAI_API_KEY"] = openai_key
             model_name = "openai:gpt-4o-mini"
@@ -55,10 +56,19 @@ class BaseAgent:
             return Agent(
                 model_name,
                 output_type=schema_class,
-                system_prompt=f"{SYSTEM_SAFETY_PROMPT}\n\nTask: {self.purpose}"
+                system_prompt=f"You are {self.agent_name}. {self.purpose}\nOutput strictly valid structured data matching the schema."
             )
         except Exception as e:
             logger.warning(f"[{self.agent_name}] Failed to initialize PydanticAI agent: {e}")
+            return None
+
+    def _run_pydantic_ai(self, agent: Agent, prompt: str) -> Optional[Any]:
+        """Execute PydanticAI agent synchronously."""
+        try:
+            res = agent.run_sync(prompt)
+            return getattr(res, "output", getattr(res, "data", None))
+        except Exception as e:
+            logger.warning(f"[{self.agent_name}] PydanticAI execution failed: {e}")
             return None
 
     def validate_evidence_ids(self, db: Session, investigation_id: str, evidence_ids: List[str]) -> List[str]:
@@ -130,8 +140,9 @@ class BaseAgent:
                 prompt_text = f"Investigation ID: {investigation_id}\n\nEvidence Context:\n{json.dumps(input_data, indent=2, default=str)}"
                 try:
                     logger.info(f"[{self.agent_name}] Invoking PydanticAI Agent...")
-                    result = pai_agent.run_sync(prompt_text)
-                    llm_output = result.data
+                    llm_output = self._run_pydantic_ai(pai_agent, prompt_text)
+                    if llm_output is None:
+                        raise RuntimeError("PydanticAI returned None")
                     
                     # Run Grounding Validation Firewall if validator provided
                     if grounding_validator_fn and source_chunks is not None:
