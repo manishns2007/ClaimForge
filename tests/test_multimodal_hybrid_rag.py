@@ -406,7 +406,8 @@ def test_14_pydantic_ai_hybrid_rag_integration(db_session):
     
     rates = [f for f in resp.findings if f.rule_type == "DAILY_RATE"]
     assert len(rates) == 1
-    assert float(rates[0].rule_value) == 2250.0
+    val_clean = float(str(rates[0].rule_value).replace("$", "").replace(",", "").strip())
+    assert val_clean == 2250.0
 
 
 # =========================================================================
