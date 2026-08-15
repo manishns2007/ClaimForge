@@ -1,26 +1,26 @@
 import re
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.app.agents.base import BaseAgent
-from backend.app.db.models import Document, DocumentChunk, Evidence
-from backend.app.services.dynamic_extractor import DynamicExtractor
+from backend.app.db.models import Evidence
+from backend.app.services.document_retriever import SqliteDocumentRetriever
 
 
 class ContradictionFindingItem(BaseModel):
-    contradiction_type: str  # CONTRACT_AMENDMENT_OVERRIDE, CONTINUED_OPERATION, LATE_PICKUP_AGREEMENT, STANDBY_CLAUSE_APPLIES
-    description: str
-    severity: str  # LOW, MEDIUM, HIGH, CRITICAL
-    evidence_ids: List[str] = []
-    source_citations: Dict[str, Any] = {}
-    impact: str
+    contradiction_type: str = Field(description="CONTRACT_AMENDMENT_OVERRIDE, CONTINUED_OPERATION, LATE_PICKUP_AGREEMENT, STANDBY_CLAUSE_APPLIES")
+    description: str = Field(description="Detailed factual description of the counter-evidence")
+    severity: str = Field(default="MEDIUM", description="LOW, MEDIUM, HIGH, CRITICAL")
+    evidence_ids: List[str] = Field(default_factory=list, description="IDs of supporting evidence records in DB")
+    source_citations: Dict[str, Any] = Field(default_factory=dict, description="Document filename, clause, page citations")
+    impact: str = Field(description="Impact of contradiction on dispute recoverability")
 
 
 class ContradictionAgentResponse(BaseModel):
-    status: str
-    has_contradiction: bool = False
-    findings: List[ContradictionFindingItem] = []
+    status: str = Field(description="Status: COMPLETED")
+    has_contradiction: bool = Field(default=False, description="True if at least one valid contradiction was identified")
+    findings: List[ContradictionFindingItem] = Field(default_factory=list, description="List of contradiction items")
 
 
 class ContradictionHunter(BaseAgent):
@@ -41,19 +41,20 @@ class ContradictionHunter(BaseAgent):
         Adversarially scans all uploaded documents and evidence for counter-arguments.
         Validates returned evidence_ids against database.
         """
-        all_docs = db.query(Document).filter(Document.investigation_id == investigation_id).all()
+        retriever = SqliteDocumentRetriever(db)
+        chunks = retriever.get_chunks_for_investigation(investigation_id)
+
         all_evidence = db.query(Evidence).filter(Evidence.investigation_id == investigation_id).all()
 
-        doc_contents = []
-        for d in all_docs:
-            chunks = db.query(DocumentChunk).filter(DocumentChunk.document_id == d.id).all()
-            for c in chunks:
-                doc_contents.append({
-                    "document_id": d.id,
-                    "filename": d.filename,
-                    "page": c.page_number or 1,
-                    "content": c.content
-                })
+        doc_contents = [
+            {
+                "document_id": c.document_id,
+                "filename": c.source_document_filename,
+                "page": c.page_number or 1,
+                "content": c.content
+            }
+            for c in chunks
+        ]
 
         evidence_items = [{
             "id": e.id,
@@ -77,10 +78,10 @@ class ContradictionHunter(BaseAgent):
 
             # Check for Contract Amendment counter-evidence
             for d in inp.get("all_documents", []):
-                fname = d["filename"].lower()
-                content = d["content"]
+                fname = (d.get("filename") or "").lower()
+                content = d.get("content", "")
                 content_lower = content.lower()
-                doc_id = d["document_id"]
+                doc_id = d.get("document_id")
                 page = d.get("page", 1)
 
                 if "amendment" in fname or "amendment" in content_lower:
@@ -103,7 +104,7 @@ class ContradictionHunter(BaseAgent):
                                 description=f"{sec_ref} explicitly stipulates that billing continues until physical equipment pickup and transport.",
                                 severity="CRITICAL",
                                 evidence_ids=ev_ids,
-                                source_citations={"filename": d["filename"], "clause": sec_ref, "page": page},
+                                source_citations={"filename": d.get("filename"), "clause": sec_ref, "page": page},
                                 impact="Invalidates off-rent email cutoff claim. Billed charges are contractually valid per amendment."
                             ))
 

@@ -1,52 +1,64 @@
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel
+from typing import List, Optional, Dict, Any, Tuple
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.app.agents.base import BaseAgent
-from backend.app.db.models import Document, DocumentChunk
+from backend.app.services.document_retriever import SqliteDocumentRetriever, DocumentChunkDTO
 from backend.app.services.dynamic_extractor import DynamicExtractor
+from backend.app.services.grounding_validator import GroundingValidator
 
 
 class ContractFindingItem(BaseModel):
-    rule_type: str  # BILLING_BASIS, DAILY_RATE, HOURLY_RATE, OFF_RENT_TRIGGER, PICKUP_CONDITION, STANDBY_RATE
-    rule_value: Any
-    clarity: str = "EXPLICIT"  # EXPLICIT, IMPLIED, UNKNOWN
-    confidence: float = 1.0
-    source_document_id: Optional[str] = None
-    page: Optional[int] = 1
-    section_reference: Optional[str] = None
-    evidence_text: str
+    rule_type: str = Field(description="Contract rule type: BILLING_BASIS, DAILY_RATE, OFF_RENT_TRIGGER, PICKUP_CONDITION, STANDBY_RATE")
+    rule_value: Any = Field(description="Extracted rule value (rate amount or condition string)")
+    clarity: str = Field(default="EXPLICIT", description="EXPLICIT, IMPLIED, or UNKNOWN")
+    confidence: float = Field(default=1.0, description="Extraction confidence score")
+    source_document: Optional[str] = Field(default=None, description="Contract filename")
+    source_document_id: Optional[str] = Field(default=None, description="Contract document database ID")
+    page: Optional[int] = Field(default=1, description="Page number")
+    section_reference: Optional[str] = Field(default=None, description="Clause or section identifier, e.g. Clause 4.2")
+    evidence_text: str = Field(description="Verbatim contract quotation")
+    matched_text: Optional[str] = Field(default=None, description="Verbatim matched text quote")
 
 
 class ContractAgentResponse(BaseModel):
-    status: str  # COMPLETED, NO_CONTRACT_RULES_FOUND
-    findings: List[ContractFindingItem] = []
+    status: str = Field(description="Extraction status: COMPLETED or NO_CONTRACT_RULES_FOUND")
+    findings: List[ContractFindingItem] = Field(default_factory=list, description="Extracted contractual rule findings")
 
 
 class ContractIntelligenceAgent(BaseAgent):
     def __init__(self):
         super().__init__(
             agent_name="ContractIntelligenceAgent",
-            purpose="Extract semantic contractual terms, billing basis, and off-rent triggers from contract PDFs."
+            purpose="Extract semantic contractual terms, billing basis, and off-rent triggers from contract documents."
         )
 
     def extract_findings(self, db: Session, investigation_id: str) -> ContractAgentResponse:
-        docs = db.query(Document).filter(
-            Document.investigation_id == investigation_id
-        ).all()
+        retriever = SqliteDocumentRetriever(db)
+        chunks = retriever.get_chunks_for_investigation(investigation_id)
 
-        chunks_data = []
-        for doc in docs:
-            chunks = db.query(DocumentChunk).filter(DocumentChunk.document_id == doc.id).all()
-            for c in chunks:
-                chunks_data.append({
-                    "document_id": doc.id,
-                    "filename": doc.filename,
-                    "page": c.page_number or 1,
-                    "content": c.content
-                })
+        chunks_data = [
+            {
+                "document_id": c.document_id,
+                "filename": c.source_document_filename,
+                "page": c.page_number or 1,
+                "content": c.content
+            }
+            for c in chunks
+        ]
 
-        input_data = {"investigation_id": investigation_id, "document_chunks": chunks_data}
+        input_data = {
+            "investigation_id": investigation_id,
+            "document_chunks": chunks_data
+        }
+
+        def validator_fn(resp: ContractAgentResponse, src_chunks: List[DocumentChunkDTO]) -> Tuple[bool, List[str]]:
+            if not resp.findings:
+                return True, []
+            validated, rejections = GroundingValidator.validate_contract_findings(resp.findings, src_chunks)
+            if rejections:
+                return False, rejections
+            return True, []
 
         def fallback_handler(db_sess: Session, inv_id: str, inp: Dict[str, Any]) -> ContractAgentResponse:
             findings: List[ContractFindingItem] = []
@@ -74,10 +86,12 @@ class ContractIntelligenceAgent(BaseAgent):
                             rule_value=r.rule_value,
                             clarity="EXPLICIT",
                             confidence=r.confidence,
+                            source_document=fname,
                             source_document_id=doc_id,
                             page=page,
                             section_reference=r.section_reference,
-                            evidence_text=r.matched_text
+                            evidence_text=r.matched_text,
+                            matched_text=r.matched_text
                         ))
 
             return ContractAgentResponse(status="COMPLETED", findings=findings)
@@ -87,5 +101,7 @@ class ContractIntelligenceAgent(BaseAgent):
             investigation_id=investigation_id,
             input_data=input_data,
             schema_class=ContractAgentResponse,
-            fallback_fn=fallback_handler
+            fallback_fn=fallback_handler,
+            source_chunks=chunks,
+            grounding_validator_fn=validator_fn
         )

@@ -10,6 +10,7 @@ from backend.app.db.models import (
 )
 from backend.app.services.event_service import EventService
 from backend.app.services.evidence_service import EvidenceService
+from backend.app.services.document_retriever import SqliteDocumentRetriever
 from backend.app.services.dynamic_extractor import DynamicExtractor
 from backend.app.engines.telemetry_engine import TelemetryEngine
 from backend.app.services.contract_rule_normalizer import ContractRuleNormalizer, NormalizedContractRule
@@ -110,18 +111,16 @@ class DeterministicInvestigationPipeline:
         # ----------------------------------------------------
         # Step 2: Extract Communication Evidence (EML/Emails)
         # ----------------------------------------------------
-        email_docs = [d for d in documents if d.file_type in ["EML", "TXT"]]
+        retriever = SqliteDocumentRetriever(db)
+        email_chunks = retriever.get_chunks_for_investigation(investigation_id, file_types=["EML", "TXT"])
         off_rent_notice_ts: Optional[datetime] = None
         vendor_ack_ts: Optional[datetime] = None
 
-        for ed in email_docs:
-            chunks = db.query(DocumentChunk).filter(DocumentChunk.document_id == ed.id).all()
-            full_text = "\n".join([c.content for c in chunks])
-
+        for ch in email_chunks:
             comm_events = DynamicExtractor.extract_communication_events(
-                text=full_text,
-                filename=ed.filename,
-                doc_id=ed.id
+                text=ch.content,
+                filename=ch.source_document_filename,
+                doc_id=ch.document_id
             )
 
             for ce in comm_events:
@@ -133,19 +132,16 @@ class DeterministicInvestigationPipeline:
         # ----------------------------------------------------
         # Step 3: Extract Contract Rules (PDFs/All Docs)
         # ----------------------------------------------------
-        pdf_docs = [d for d in documents if d.file_type == "PDF"]
+        contract_chunks = retriever.get_chunks_for_investigation(investigation_id, file_types=["PDF"])
         normalized_rules: List[NormalizedContractRule] = []
         has_pickup_amendment = False
 
-        for pd_doc in pdf_docs:
-            chunks = db.query(DocumentChunk).filter(DocumentChunk.document_id == pd_doc.id).all()
-            full_text = "\n".join([c.content for c in chunks])
-
+        for c_chunk in contract_chunks:
             extracted_rules = DynamicExtractor.extract_contract_rules(
-                text=full_text,
-                filename=pd_doc.filename,
-                doc_id=pd_doc.id,
-                page=1
+                text=c_chunk.content,
+                filename=c_chunk.source_document_filename,
+                doc_id=c_chunk.document_id,
+                page=c_chunk.page_number or 1
             )
 
             for er in extracted_rules:
@@ -156,19 +152,19 @@ class DeterministicInvestigationPipeline:
                     rule_type=er.rule_type,
                     value=er.rule_value,
                     section_reference=er.section_reference,
-                    source_document_id=pd_doc.id,
-                    source_citation={"filename": pd_doc.filename, "page": er.page, "matched_text": er.matched_text}
+                    source_document_id=c_chunk.document_id,
+                    source_citation={"filename": c_chunk.source_document_filename, "page": er.page, "matched_text": er.matched_text}
                 )
                 normalized_rules.append(norm_rule)
 
                 # Persist ContractRule in DB
                 db_rule = ContractRule(
                     investigation_id=investigation_id,
-                    source_document_id=pd_doc.id,
+                    source_document_id=c_chunk.document_id,
                     rule_type=er.rule_type,
                     rule_value_json={"value": er.rule_value},
                     section_reference=er.section_reference,
-                    source_citation={"filename": pd_doc.filename, "page": er.page, "matched_text": er.matched_text}
+                    source_citation={"filename": c_chunk.source_document_filename, "page": er.page, "matched_text": er.matched_text}
                 )
                 db.add(db_rule)
         
@@ -185,16 +181,14 @@ class DeterministicInvestigationPipeline:
         # ----------------------------------------------------
         # Step 4: Extract Charges from Invoices (Grounding Firewall)
         # ----------------------------------------------------
+        all_doc_chunks = retriever.get_chunks_for_investigation(investigation_id)
         normalized_charges: List[NormalizedCharge] = []
-        for pd_doc in documents:
-            chunks = db.query(DocumentChunk).filter(DocumentChunk.document_id == pd_doc.id).all()
-            full_text = "\n".join([c.content for c in chunks])
-
+        for ch in all_doc_chunks:
             inv_data = DynamicExtractor.extract_invoice_data(
-                text=full_text,
-                filename=pd_doc.filename,
-                doc_id=pd_doc.id,
-                page=1
+                text=ch.content,
+                filename=ch.source_document_filename,
+                doc_id=ch.document_id,
+                page=ch.page_number or 1
             )
 
             # Check if this document contains an actual invoice / charge with billed amount
@@ -229,10 +223,10 @@ class DeterministicInvestigationPipeline:
                     billed_amount=billed_amount,
                     billing_start=b_start,
                     billing_end=b_end,
-                    source_document_id=pd_doc.id,
+                    source_document_id=ch.document_id,
                     source_citation={
-                        "filename": pd_doc.filename,
-                        "page": 1,
+                        "filename": ch.source_document_filename,
+                        "page": ch.page_number or 1,
                         "matched_amount": inv_data.billed_amount.matched_text,
                         "confidence": inv_data.billed_amount.confidence
                     }
@@ -242,14 +236,14 @@ class DeterministicInvestigationPipeline:
                 # Persist Charge record in DB
                 db_charge = Charge(
                     investigation_id=investigation_id,
-                    source_document_id=pd_doc.id,
+                    source_document_id=ch.document_id,
                     charge_type="RENTAL",
                     description=f"{equipment_id or 'Equipment'} Rental ({units_billed} units @ ${unit_rate}/unit)",
                     billed_amount=billed_amount,
                     expected_amount=None,
                     unit_rate=unit_rate,
                     units_billed=units_billed,
-                    source_citation={"filename": pd_doc.filename, "page": 1}
+                    source_citation={"filename": ch.source_document_filename, "page": ch.page_number or 1}
                 )
                 db.add(db_charge)
 

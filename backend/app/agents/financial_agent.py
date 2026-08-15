@@ -1,56 +1,68 @@
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel
+from typing import List, Optional, Dict, Any, Tuple
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.app.agents.base import BaseAgent
-from backend.app.db.models import Document, DocumentChunk
+from backend.app.services.document_retriever import SqliteDocumentRetriever, DocumentChunkDTO
 from backend.app.services.dynamic_extractor import DynamicExtractor
+from backend.app.services.grounding_validator import GroundingValidator
 
 
 class FinancialLineItem(BaseModel):
-    vendor_name: str
-    invoice_number: str
-    equipment_id: Optional[str] = None
-    charge_type: str = "RENTAL"  # RENTAL, STANDBY, ACCESSORIAL
-    billing_period: str = "Billed Rental Period"
-    units_billed: float
-    unit_rate: float
-    billed_amount: float
-    description: str
-    source_document_id: Optional[str] = None
-    page: Optional[int] = 1
+    vendor_name: str = Field(description="Exact vendor name from invoice")
+    invoice_number: str = Field(description="Exact invoice number from invoice")
+    equipment_id: Optional[str] = Field(default=None, description="Equipment identifier or serial")
+    charge_type: str = Field(default="RENTAL", description="Charge category: RENTAL, STANDBY, ACCESSORIAL")
+    billing_period: str = Field(default="Billed Rental Period", description="Billing period or date range")
+    units_billed: float = Field(default=1.0, description="Quantity or days billed")
+    unit_rate: float = Field(default=0.0, description="Rate per unit")
+    billed_amount: float = Field(description="Total billed financial charge")
+    description: str = Field(description="Description of line item charge")
+    source_document: Optional[str] = Field(default=None, description="Source filename containing this item")
+    source_document_id: Optional[str] = Field(default=None, description="Source document database ID")
+    page: Optional[int] = Field(default=1, description="Page number where item appears")
+    matched_text: Optional[str] = Field(default=None, description="Verbatim text quotation from invoice")
+    confidence: float = Field(default=1.0, description="Extraction confidence score")
 
 
 class FinancialAgentResponse(BaseModel):
-    status: str
-    line_items: List[FinancialLineItem] = []
+    status: str = Field(description="Status of extraction: COMPLETED or NO_FINANCIAL_ITEMS_FOUND")
+    line_items: List[FinancialLineItem] = Field(default_factory=list, description="Extracted line items")
 
 
 class FinancialInvestigator(BaseAgent):
     def __init__(self):
         super().__init__(
             agent_name="FinancialInvestigator",
-            purpose="Extract semantic invoice line items, amounts, rates, and billed date ranges."
+            purpose="Extract semantic invoice line items, amounts, rates, and billed date ranges with verbatim provenance."
         )
 
     def extract_line_items(self, db: Session, investigation_id: str) -> FinancialAgentResponse:
-        docs = db.query(Document).filter(
-            Document.investigation_id == investigation_id
-        ).all()
+        retriever = SqliteDocumentRetriever(db)
+        chunks = retriever.get_chunks_for_investigation(investigation_id)
 
-        invoice_chunks = []
-        for doc in docs:
-            # Check all documents, prioritizing PDFs or docs with financial keywords
-            chunks = db.query(DocumentChunk).filter(DocumentChunk.document_id == doc.id).all()
-            for c in chunks:
-                invoice_chunks.append({
-                    "document_id": doc.id,
-                    "filename": doc.filename,
-                    "page": c.page_number or 1,
-                    "content": c.content
-                })
+        invoice_chunks_payload = [
+            {
+                "document_id": c.document_id,
+                "filename": c.source_document_filename,
+                "page": c.page_number or 1,
+                "content": c.content
+            }
+            for c in chunks
+        ]
 
-        input_data = {"investigation_id": investigation_id, "invoice_chunks": invoice_chunks}
+        input_data = {
+            "investigation_id": investigation_id,
+            "invoice_chunks": invoice_chunks_payload
+        }
+
+        def validator_fn(resp: FinancialAgentResponse, src_chunks: List[DocumentChunkDTO]) -> Tuple[bool, List[str]]:
+            if not resp.line_items:
+                return True, []
+            validated_items, rejections = GroundingValidator.validate_financial_items(resp.line_items, src_chunks)
+            if rejections:
+                return False, rejections
+            return True, []
 
         def fallback_handler(db_sess: Session, inv_id: str, inp: Dict[str, Any]) -> FinancialAgentResponse:
             items: List[FinancialLineItem] = []
@@ -69,7 +81,6 @@ class FinancialInvestigator(BaseAgent):
                     page=page
                 )
 
-                # If financial fields are present (at least billed_amount or invoice_number)
                 if inv_data.billed_amount or inv_data.invoice_number:
                     billed_amt = inv_data.billed_amount.value if inv_data.billed_amount else 0.0
                     unit_rate = inv_data.unit_rate.value if inv_data.unit_rate else 0.0
@@ -86,6 +97,7 @@ class FinancialInvestigator(BaseAgent):
                     v_name = inv_data.vendor_name.value if inv_data.vendor_name else "Unknown Vendor"
                     inv_num = inv_data.invoice_number.value if inv_data.invoice_number else "INV-UNKNOWN"
                     eq_id = inv_data.equipment_id.value if inv_data.equipment_id else None
+                    matched_snippet = inv_data.billed_amount.matched_text if inv_data.billed_amount else text[:100]
 
                     inv_key = f"{v_name}::{inv_num}::{billed_amt}"
                     if inv_key not in seen_invoices and billed_amt > 0:
@@ -100,8 +112,11 @@ class FinancialInvestigator(BaseAgent):
                             unit_rate=unit_rate,
                             billed_amount=billed_amt,
                             description=f"{eq_id or 'Equipment'} Rental ({units_billed} units @ ${unit_rate}/unit)",
+                            source_document=fname,
                             source_document_id=doc_id,
-                            page=page
+                            page=page,
+                            matched_text=matched_snippet,
+                            confidence=inv_data.billed_amount.confidence if inv_data.billed_amount else 0.9
                         ))
 
             if not items:
@@ -114,5 +129,7 @@ class FinancialInvestigator(BaseAgent):
             investigation_id=investigation_id,
             input_data=input_data,
             schema_class=FinancialAgentResponse,
-            fallback_fn=fallback_handler
+            fallback_fn=fallback_handler,
+            source_chunks=chunks,
+            grounding_validator_fn=validator_fn
         )

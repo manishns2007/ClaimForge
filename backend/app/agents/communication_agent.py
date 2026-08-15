@@ -1,25 +1,27 @@
-from datetime import datetime, timezone
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel
+from typing import List, Optional, Dict, Any, Tuple
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.app.agents.base import BaseAgent
-from backend.app.db.models import Document, DocumentChunk
+from backend.app.services.document_retriever import SqliteDocumentRetriever, DocumentChunkDTO
 from backend.app.services.dynamic_extractor import DynamicExtractor
+from backend.app.services.grounding_validator import GroundingValidator
 
 
 class CommunicationEventItem(BaseModel):
-    event_type: str  # OFF_RENT_REQUEST, OFF_RENT_ACKNOWLEDGEMENT, EXTENSION_REQUEST, PICKUP_REQUEST, STANDBY_NOTICE
-    timestamp_iso: Optional[str] = None
-    participants: str = ""
-    statement: str = ""
-    confidence: float = 1.0
-    source_document_id: Optional[str] = None
+    event_type: str = Field(description="Communication event type: OFF_RENT_REQUEST, OFF_RENT_ACKNOWLEDGEMENT, EXTENSION_REQUEST, PICKUP_REQUEST, STANDBY_NOTICE")
+    timestamp_iso: Optional[str] = Field(default=None, description="ISO 8601 formatted timestamp")
+    participants: str = Field(default="", description="Sender and recipient participants")
+    statement: str = Field(default="", description="Verbatim statement or notice excerpt")
+    confidence: float = Field(default=1.0, description="Extraction confidence score")
+    source_document: Optional[str] = Field(default=None, description="Email filename")
+    source_document_id: Optional[str] = Field(default=None, description="Document database ID")
+    matched_text: Optional[str] = Field(default=None, description="Verbatim quotation from email text")
 
 
 class CommunicationAgentResponse(BaseModel):
-    status: str
-    events: List[CommunicationEventItem] = []
+    status: str = Field(description="Extraction status: COMPLETED or NO_COMMUNICATION_EVENTS_FOUND")
+    events: List[CommunicationEventItem] = Field(default_factory=list, description="Extracted communication events")
 
 
 class CommunicationInvestigator(BaseAgent):
@@ -30,22 +32,33 @@ class CommunicationInvestigator(BaseAgent):
         )
 
     def extract_communication_events(self, db: Session, investigation_id: str) -> CommunicationAgentResponse:
-        email_docs = db.query(Document).filter(
-            Document.investigation_id == investigation_id,
-            Document.file_type.in_(["EML", "TXT"])
-        ).all()
+        retriever = SqliteDocumentRetriever(db)
+        email_chunks = retriever.get_chunks_for_investigation(investigation_id, file_types=["EML", "TXT"])
+        if not email_chunks:
+            # Fallback to all chunks if file_type filter yields none
+            email_chunks = retriever.get_chunks_for_investigation(investigation_id)
 
-        email_chunks = []
-        for doc in email_docs:
-            chunks = db.query(DocumentChunk).filter(DocumentChunk.document_id == doc.id).all()
-            for c in chunks:
-                email_chunks.append({
-                    "document_id": doc.id,
-                    "filename": doc.filename,
-                    "content": c.content
-                })
+        chunks_data = [
+            {
+                "document_id": c.document_id,
+                "filename": c.source_document_filename,
+                "content": c.content
+            }
+            for c in email_chunks
+        ]
 
-        input_data = {"investigation_id": investigation_id, "email_chunks": email_chunks}
+        input_data = {
+            "investigation_id": investigation_id,
+            "email_chunks": chunks_data
+        }
+
+        def validator_fn(resp: CommunicationAgentResponse, src_chunks: List[DocumentChunkDTO]) -> Tuple[bool, List[str]]:
+            if not resp.events:
+                return True, []
+            validated, rejections = GroundingValidator.validate_communication_events(resp.events, src_chunks)
+            if rejections:
+                return False, rejections
+            return True, []
 
         def fallback_handler(db_sess: Session, inv_id: str, inp: Dict[str, Any]) -> CommunicationAgentResponse:
             events: List[CommunicationEventItem] = []
@@ -72,7 +85,9 @@ class CommunicationInvestigator(BaseAgent):
                             participants=ce.participants,
                             statement=ce.statement,
                             confidence=ce.confidence,
-                            source_document_id=doc_id
+                            source_document=fname,
+                            source_document_id=doc_id,
+                            matched_text=ce.statement
                         ))
 
             if not events:
@@ -85,5 +100,7 @@ class CommunicationInvestigator(BaseAgent):
             investigation_id=investigation_id,
             input_data=input_data,
             schema_class=CommunicationAgentResponse,
-            fallback_fn=fallback_handler
+            fallback_fn=fallback_handler,
+            source_chunks=email_chunks,
+            grounding_validator_fn=validator_fn
         )

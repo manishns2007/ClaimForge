@@ -1,39 +1,39 @@
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.app.agents.base import BaseAgent
 
 
 class EventHypothesis(BaseModel):
-    event_type: str
-    timestamp_iso: Optional[str] = None
-    description: str
-    supporting_evidence_ids: List[str] = []
-    confidence: float = 1.0
+    event_type: str = Field(description="Event type classification")
+    timestamp_iso: Optional[str] = Field(default=None, description="Event timestamp in ISO 8601")
+    description: str = Field(description="Description of the operational event")
+    supporting_evidence_ids: List[str] = Field(default_factory=list, description="IDs of evidence supporting this event")
+    confidence: float = Field(default=1.0, description="Confidence score")
 
 
 class ClaimHypothesis(BaseModel):
-    claim_type: str
-    vendor_name: str
-    invoice_number: str
-    reason: str
-    supporting_evidence_ids: List[str] = []
-    missing_evidence: List[str] = []
-    initial_hypothesis_strength: float = 0.85
+    claim_type: str = Field(description="Dispute category, e.g. EXCESS_RENTAL_PERIOD_OVERCHARGE")
+    vendor_name: str = Field(description="Vendor name from verified invoice")
+    invoice_number: str = Field(description="Invoice number from verified invoice")
+    reason: str = Field(description="Detailed reason explaining the suspected overcharge")
+    supporting_evidence_ids: List[str] = Field(default_factory=list, description="Evidence IDs")
+    missing_evidence: List[str] = Field(default_factory=list, description="Identified missing evidence items")
+    initial_hypothesis_strength: float = Field(default=0.85, description="Initial strength estimate")
 
 
 class EventReasoningResponse(BaseModel):
-    status: str
-    chronological_timeline: List[EventHypothesis] = []
-    proposed_claim: Optional[ClaimHypothesis] = None
+    status: str = Field(description="Status of reasoning: COMPLETED or NO_EVIDENCE_FOUND")
+    chronological_timeline: List[EventHypothesis] = Field(default_factory=list, description="Unified timeline")
+    proposed_claim: Optional[ClaimHypothesis] = Field(default=None, description="Proposed claim hypothesis or None")
 
 
 class EventReasoningAgent(BaseAgent):
     def __init__(self):
         super().__init__(
             agent_name="EventReasoningAgent",
-            purpose="Construct unified chronological event timeline and synthesize candidate claim hypothesis."
+            purpose="Construct unified chronological event timeline and synthesize candidate claim hypothesis strictly from verified findings."
         )
 
     def reason_over_evidence(
@@ -52,7 +52,7 @@ class EventReasoningAgent(BaseAgent):
         }
 
         def fallback_handler(db_sess: Session, inv_id: str, inp: Dict[str, Any]) -> EventReasoningResponse:
-            timeline = []
+            timeline: List[EventHypothesis] = []
             for comm in inp.get("communication_events", []):
                 timeline.append(EventHypothesis(
                     event_type=comm.get("event_type", "COMMUNICATION_EVENT"),
@@ -61,7 +61,7 @@ class EventReasoningAgent(BaseAgent):
                     confidence=comm.get("confidence", 0.9)
                 ))
 
-            # Synthesize claim hypothesis only if document-grounded financial findings exist
+            # Synthesize claim hypothesis ONLY if verified document-grounded financial findings exist
             fin_items = inp.get("financial_findings", [])
             proposed: Optional[ClaimHypothesis] = None
 
@@ -86,10 +86,16 @@ class EventReasoningAgent(BaseAgent):
                 proposed_claim=proposed
             )
 
-        return self.execute_with_lifecycle(
+        resp = self.execute_with_lifecycle(
             db=db,
             investigation_id=investigation_id,
             input_data=input_data,
             schema_class=EventReasoningResponse,
             fallback_fn=fallback_handler
         )
+
+        # Grounding Rule: If financial findings are empty, proposed_claim MUST be None
+        if not financial_findings:
+            resp.proposed_claim = None
+
+        return resp
