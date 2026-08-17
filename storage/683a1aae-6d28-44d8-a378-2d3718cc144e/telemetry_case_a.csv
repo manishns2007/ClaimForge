@@ -1,0 +1,4 @@
+timestamp,latitude,longitude,rpm,hydraulic_pressure,engine_hours,equipment_id
+2026-06-11T14:00:00Z,37.7749,-122.4194,1850,2600,140.0,EXC-320-A
+2026-06-11T14:47:00Z,37.7749,-122.4194,0,0,140.5,EXC-320-A
+2026-06-11T15:01:00Z,37.7800,-122.4100,0,0,140.5,EXC-320-A
