@@ -282,12 +282,10 @@ class DynamicExtractor:
                         page=page,
                         field_name="invoice_number"
                     )
-                    break
-
-        # B. Vendor / Payee / Lessor Name
+                         # B. Vendor / Payee / Claimant / Lessor Name
         vendor_patterns = [
-            (re.compile(r"(?:Vendor|Lessor|Company|Payee|Billed By|From|Contractor|Supplier)\s*:\s*([^\n\r,]+)", re.IGNORECASE), 0.95),
-            (re.compile(r"(?:Invoice From|Remit To|Issued By)\s*:\s*([^\n\r,]+)", re.IGNORECASE), 0.90),
+            (re.compile(r"(?:Vendor|Lessor|Company|Payee|Billed By|From|Contractor|Supplier|Claimant(?:\s+Name)?|Patient(?:\s+Name)?|Insured|Employee)\s*:\s*([^\n\r,]+)", re.IGNORECASE), 0.95),
+            (re.compile(r"(?:Invoice From|Remit To|Issued By|Hospital|Clinic|Provider)\s*:\s*([^\n\r,]+)", re.IGNORECASE), 0.90),
         ]
         for pat, conf in vendor_patterns:
             m = pat.search(text)
@@ -305,10 +303,10 @@ class DynamicExtractor:
                     )
                     break
 
-        # C. Equipment / Asset ID
+        # C. Equipment / Asset / Service Description
         equip_patterns = [
-            (re.compile(r"(?:Equipment(?:\s+Unit)?|Item|Asset|Unit\s*#?|Machine)\s*:\s*([^\n\r,]+)", re.IGNORECASE), 0.95),
-            (re.compile(r"(?:Rental Item|Description)\s*:\s*([^\n\r,]+)", re.IGNORECASE), 0.85),
+            (re.compile(r"(?:Equipment(?:\s+Unit)?|Item|Asset|Unit\s*#?|Machine|Service|Procedure|Diagnosis)\s*:\s*([^\n\r,]+)", re.IGNORECASE), 0.95),
+            (re.compile(r"(?:Rental Item|Description|Line Item)\s*:\s*([^\n\r,]+)", re.IGNORECASE), 0.85),
             (re.compile(r"\((?:Unit\s*#|Asset\s*#)?\s*([A-Za-z0-9\-_]+)\)", re.IGNORECASE), 0.80),
         ]
         for pat, conf in equip_patterns:
@@ -327,11 +325,11 @@ class DynamicExtractor:
                     )
                     break
 
-        # D. Billed Total Amount
+        # D. Billed Total Amount / Claim Amount
         amount_patterns = [
-            (re.compile(r"(?:Total(?:\s+Amount)?(?:\s+Due)?(?:\s+Billed)?|Total\s+Amount\s+Due|Amount\s+Due|Total\s+Due|Total\s+Charges|Balance\s+Due)\s*[:$]?\s*(?:USD|\$|₹|€|£)?\s*([\d,]+\.?\d*)", re.IGNORECASE), 0.95),
-            (re.compile(r"(?:Invoice\s+Amount|Total\s+Billed)\s*[:$]?\s*(?:USD|\$|₹|€|£)?\s*([\d,]+\.?\d*)", re.IGNORECASE), 0.90),
-            (re.compile(r"\bTotal\s*[:$]\s*(?:USD|\$|₹|€|£)?\s*([\d,]+\.?\d*)", re.IGNORECASE), 0.85),
+            (re.compile(r"(?:Claim(?:\s+Amount)?|Total\s+Claim|Total(?:\s+Amount)?(?:\s+Due)?(?:\s+Billed)?|Total\s+Amount\s+Due|Amount\s+Due|Total\s+Due|Total\s+Charges|Balance\s+Due)\s*[:$₹€£]?\s*(?:USD|INR|EUR|GBP|\$|₹|€|£)?\s*([\d,]+\.?\d*)", re.IGNORECASE), 0.95),
+            (re.compile(r"(?:Invoice\s+Amount|Total\s+Billed|Gross\s+Amount)\s*[:$₹€£]?\s*(?:USD|INR|EUR|GBP|\$|₹|€|£)?\s*([\d,]+\.?\d*)", re.IGNORECASE), 0.90),
+            (re.compile(r"\bTotal\s*[:$₹€£]\s*(?:USD|INR|EUR|GBP|\$|₹|€|£)?\s*([\d,]+\.?\d*)", re.IGNORECASE), 0.85),
         ]
         for pat, conf in amount_patterns:
             m = pat.search(text)
@@ -349,10 +347,10 @@ class DynamicExtractor:
                     )
                     break
 
-        # E. Unit Rate (Daily / Hourly rate)
+        # E. Unit Rate (Daily / Hourly / Room rate)
         rate_patterns = [
-            (re.compile(r"(?:Daily(?:\s+Rental)?\s+Rate|Daily\s+Rate|Unit\s+Rate|Unit\s+Price|Rate)\s*[:$]?\s*(?:USD|\$|₹|€|£)?\s*([\d,]+\.?\d*)", re.IGNORECASE), 0.95),
-            (re.compile(r"@\s*(?:USD|\$|₹|€|£)?\s*([\d,]+\.?\d*)\s*/\s*(?:day|hr|hour|unit)", re.IGNORECASE), 0.90),
+            (re.compile(r"(?:Daily(?:\s+Rental|\s+Room)?\s+Rate|Daily\s+Rate|Room\s+Rate|Unit\s+Rate|Unit\s+Price|Rate)\s*[:$₹€£]?\s*(?:USD|INR|EUR|GBP|\$|₹|€|£)?\s*([\d,]+\.?\d*)", re.IGNORECASE), 0.95),
+            (re.compile(r"@\s*(?:USD|INR|EUR|GBP|\$|₹|€|£)?\s*([\d,]+\.?\d*)\s*/\s*(?:day|hr|hour|unit|night)", re.IGNORECASE), 0.90),
         ]
         for pat, conf in rate_patterns:
             m = pat.search(text)
@@ -370,11 +368,12 @@ class DynamicExtractor:
                     )
                     break
 
-        # F. Quantity / Units Billed
+        # F. Quantity / Units Billed / Duration / Hospitalization Days
         qty_patterns = [
-            (re.compile(r"(?:Quantity|Units(?:\s+Billed)?|Days\s+Billed|Days|Qty)\s*[:=]?\s*(\d+(?:\.\d+)?)", re.IGNORECASE), 0.90),
+            (re.compile(r"(?:Hospitalization(?:\s+Duration)?|Duration|Length\s+of\s+Stay|Quantity|Units(?:\s+Billed)?|Days\s+Billed|Days|Qty)\s*[:=]?\s*(\d+(?:\.\d+)?)", re.IGNORECASE), 0.90),
+            (re.compile(r"(?:hospitalized|admitted|stayed|billed)\s+for\s+(\d+(?:\.\d+)?)\s*days", re.IGNORECASE), 0.90),
             (re.compile(r"—\s*(\d+(?:\.\d+)?)\s*days", re.IGNORECASE), 0.85),
-            (re.compile(r"(\d+(?:\.\d+)?)\s*(?:days|hrs|hours|units)\b", re.IGNORECASE), 0.80),
+            (re.compile(r"(\d+(?:\.\d+)?)\s*(?:days|hrs|hours|units|nights)\b", re.IGNORECASE), 0.80),
         ]
         for pat, conf in qty_patterns:
             m = pat.search(text)

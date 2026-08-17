@@ -114,7 +114,14 @@ class DeterministicInvestigationPipeline:
         retriever = SqliteDocumentRetriever(db)
         email_chunks = retriever.get_chunks_for_investigation(investigation_id, file_types=["EML", "TXT"])
         off_rent_notice_ts: Optional[datetime] = None
+        off_rent_doc_id: Optional[str] = None
+        off_rent_filename: Optional[str] = None
+        off_rent_matched_text: str = ""
+
         vendor_ack_ts: Optional[datetime] = None
+        vendor_ack_doc_id: Optional[str] = None
+        vendor_ack_filename: Optional[str] = None
+        vendor_ack_matched_text: str = ""
 
         for ch in email_chunks:
             comm_events = DynamicExtractor.extract_communication_events(
@@ -126,8 +133,14 @@ class DeterministicInvestigationPipeline:
             for ce in comm_events:
                 if ce.event_type == "OFF_RENT_REQUEST" and ce.timestamp and off_rent_notice_ts is None:
                     off_rent_notice_ts = ce.timestamp
+                    off_rent_doc_id = ch.document_id
+                    off_rent_filename = ch.source_document_filename
+                    off_rent_matched_text = ce.matched_text
                 elif ce.event_type == "OFF_RENT_ACKNOWLEDGEMENT" and ce.timestamp and vendor_ack_ts is None:
                     vendor_ack_ts = ce.timestamp
+                    vendor_ack_doc_id = ch.document_id
+                    vendor_ack_filename = ch.source_document_filename
+                    vendor_ack_matched_text = ce.matched_text
 
         # ----------------------------------------------------
         # Step 3: Extract Contract Rules (PDFs/All Docs)
@@ -135,6 +148,9 @@ class DeterministicInvestigationPipeline:
         contract_chunks = retriever.get_chunks_for_investigation(investigation_id, file_types=["PDF"])
         normalized_rules: List[NormalizedContractRule] = []
         has_pickup_amendment = False
+        amendment_doc_id: Optional[str] = None
+        amendment_filename: Optional[str] = None
+        amendment_matched_text: str = ""
 
         for c_chunk in contract_chunks:
             extracted_rules = DynamicExtractor.extract_contract_rules(
@@ -147,6 +163,9 @@ class DeterministicInvestigationPipeline:
             for er in extracted_rules:
                 if er.rule_type == "OFF_RENT_TRIGGER" and er.rule_value == "PHYSICAL_PICKUP":
                     has_pickup_amendment = True
+                    amendment_doc_id = c_chunk.document_id
+                    amendment_filename = c_chunk.source_document_filename
+                    amendment_matched_text = er.matched_text
 
                 norm_rule = ContractRuleNormalizer.normalize_rule(
                     rule_type=er.rule_type,
@@ -335,25 +354,26 @@ class DeterministicInvestigationPipeline:
         # Supporting Evidence
         if off_rent_notice_ts:
             ev1 = EvidenceService.create_evidence(
-                db, investigation_id, None, "EML",
+                db, investigation_id, off_rent_doc_id, "EML",
                 f"Lessee sent off-rent notification at {off_rent_notice_ts.isoformat()}",
-                {"filename": "off_rent_notice.eml", "timestamp": off_rent_notice_ts.isoformat()}
+                {"filename": off_rent_filename or "notice.eml", "matched_text": off_rent_matched_text, "timestamp": off_rent_notice_ts.isoformat()}
             )
             created_evidence_items.append(ev1)
 
         if vendor_ack_ts:
             ev2 = EvidenceService.create_evidence(
-                db, investigation_id, None, "EML",
+                db, investigation_id, vendor_ack_doc_id, "EML",
                 f"Vendor acknowledged off-rent request at {vendor_ack_ts.isoformat()}",
-                {"filename": "vendor_ack.eml", "timestamp": vendor_ack_ts.isoformat()}
+                {"filename": vendor_ack_filename or "acknowledgement.eml", "matched_text": vendor_ack_matched_text, "timestamp": vendor_ack_ts.isoformat()}
             )
             created_evidence_items.append(ev2)
 
         if engine_shutdown_ts:
+            csv_doc_obj = telemetry_docs[0] if telemetry_docs else None
             ev3 = EvidenceService.create_evidence(
-                db, investigation_id, None, "CSV",
+                db, investigation_id, csv_doc_obj.id if csv_doc_obj else None, "CSV",
                 f"Telemetry engine shutdown recorded at {engine_shutdown_ts.isoformat()}",
-                {"filename": "telemetry.csv", "timestamp": engine_shutdown_ts.isoformat()}
+                {"filename": csv_doc_obj.filename if csv_doc_obj else "telemetry.csv", "timestamp": engine_shutdown_ts.isoformat()}
             )
             created_evidence_items.append(ev3)
 
@@ -362,9 +382,9 @@ class DeterministicInvestigationPipeline:
         contradiction_reason = None
         if has_pickup_amendment:
             ev_contra = EvidenceService.create_evidence(
-                db, investigation_id, None, "PDF",
+                db, investigation_id, amendment_doc_id, "PDF",
                 "Contract Amendment explicitly stipulates that billing continues until physical equipment pickup.",
-                {"filename": "amendment_clause.pdf", "clause": "Pickup Condition Amendment"}
+                {"filename": amendment_filename or "amendment.pdf", "matched_text": amendment_matched_text, "clause": "Pickup Condition Amendment"}
             )
             contradiction_evidence_ids.append(ev_contra.id)
             contradiction_reason = "Contract Amendment overrides off-rent notice cutoff. Billing valid until physical pickup."
